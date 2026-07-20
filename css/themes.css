@@ -1,0 +1,31 @@
+body[data-theme="dark"] {
+
+  --bg: #0f172a;
+
+  --card: #1e293b;
+
+  --text: #f8fafc;
+
+  --text-light: #94a3b8;
+
+  --border: #334155;
+}
+
+body[data-theme="dark"] .sidebar,
+body[data-theme="dark"] .topbar {
+
+  background: rgba(15,23,42,0.75);
+}
+
+body[data-theme="dark"] input,
+body[data-theme="dark"] textarea {
+
+  background: #0f172a;
+
+  color: white;
+}
+
+body[data-theme="dark"] .modal-box {
+
+  background: #1e293b;
+}

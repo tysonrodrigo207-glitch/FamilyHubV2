@@ -1,0 +1,36 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+
+  --primary: #6366f1;
+  --primary-light: #818cf8;
+
+  --bg: #f4f7fb;
+  --card: #ffffff;
+
+  --text: #1e293b;
+  --text-light: #64748b;
+
+  --border: #e2e8f0;
+
+  --shadow:
+    0 10px 30px rgba(0,0,0,0.05);
+
+  --radius: 18px;
+}
+
+body {
+  font-family:
+    Inter,
+    "Segoe UI",
+    sans-serif;
+
+  background: var(--bg);
+  color: var(--text);
+
+  overflow-x: hidden;
+}
