@@ -1,94 +1,133 @@
-const USERS = [
-
-  {
-    id: 1,
-    username: "admin",
-    password: "admin",
-    name: "Tyson",
-    role: "Admin"
-  },
-
-  {
-    id: 2,
-    username: "sarah",
-    password: "sarah",
-    name: "Sarah",
-    role: "Member"
-  },
-
-  {
-    id: 3,
-    username: "michael",
-    password: "michael",
-    name: "Michael",
-    role: "Member"
-  },
-
-  {
-    id: 4,
-    username: "lisa",
-    password: "lisa",
-    name: "Lisa",
-    role: "Member"
-  },
-
-  {
-    id: 5,
-    username: "merrick",
-    password: "merrick",
-    name: "Merrick",
-    role: "Moderator"
-  }
-
-];
-
 window.currentUser = null;
 
-function login(username, password) {
+/*
+=========================
+LOGIN
+=========================
+*/
 
-  const user = USERS.find(
+async function login(username, password) {
 
-    u =>
-      u.username === username &&
-      u.password === password
+  try {
 
-  );
+    const response = await fetch(
+      "php/auth/login.php",
+      {
 
-  if (!user) {
-    return false;
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+
+          username,
+          password
+
+        })
+
+      }
+    );
+
+    const result = await response.json();
+
+    if (!result.success) {
+
+      alert(result.message);
+
+      return false;
+
+    }
+
+    window.currentUser = result.user;
+
+    localStorage.setItem(
+
+      "familyHubUser",
+
+      JSON.stringify(result.user)
+
+    );
+
+    return true;
+
   }
 
-  localStorage.setItem(
-    "familyHubUser",
-    JSON.stringify(user)
-  );
+  catch (error) {
 
-  window.currentUser = user;
+    console.error(error);
 
-  return true;
+    alert("Unable to connect to the server.");
+
+    return false;
+
+  }
+
 }
 
-function logout() {
+/*
+=========================
+LOGOUT
+=========================
+*/
+
+async function logout() {
+
+  try {
+
+    await fetch(
+
+      "php/auth/logout.php",
+
+      {
+
+        method: "POST"
+
+      }
+
+    );
+
+  }
+
+  catch (error) {
+
+    console.error(error);
+
+  }
 
   localStorage.removeItem(
     "familyHubUser"
   );
 
   window.currentUser = null;
+
 }
+
+/*
+=========================
+CURRENT USER
+=========================
+*/
 
 function getCurrentUser() {
 
   const storedUser =
+
     localStorage.getItem(
       "familyHubUser"
     );
 
   if (!storedUser) {
+
     return null;
+
   }
 
-  return JSON.parse(
-    storedUser
-  );
+  window.currentUser =
+
+    JSON.parse(storedUser);
+
+  return window.currentUser;
+
 }

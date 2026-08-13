@@ -1,43 +1,63 @@
 const SurveysModule = {
 
-  surveys: [
+  surveys: [],
 
-    {
-      id: 1,
+  /*
+  |--------------------------------------------------------------------------
+  | LOAD SURVEYS
+  |--------------------------------------------------------------------------
+  */
 
-      title:
-        "Which new family service would help most?",
+  async loadSurveys() {
 
-      expiry: "2026-12-31",
+    try {
 
-      votedUsers: [],
-
-      options: [
-
+      const response = await fetch(
+        "php/api/surveys.php?action=list",
         {
-          text: "Health Support",
-          votes: 5
-        },
-
-        {
-          text: "Education Support",
-          votes: 3
-        },
-
-        {
-          text: "Legal Aid",
-          votes: 2
+          credentials: "include"
         }
+      );
 
-      ],
+      const result = await response.json();
 
-      createdBy: "Tyson"
+      if (!result.success) {
+
+        console.error(
+          result.message || "Failed to load surveys."
+        );
+
+        this.surveys = [];
+
+        return;
+
+      }
+
+      this.surveys = result.data || [];
+
+    } catch (error) {
+
+      console.error(
+        "Survey loading error:",
+        error
+      );
+
+      this.surveys = [];
 
     }
 
-  ],
+  },
 
-  render(container) {
+
+  /*
+  |--------------------------------------------------------------------------
+  | RENDER
+  |--------------------------------------------------------------------------
+  */
+
+  async render(container) {
+
+    await this.loadSurveys();
 
     const isAdmin =
       window.currentUser &&
@@ -46,42 +66,157 @@ const SurveysModule = {
         window.currentUser.role === "Moderator"
       );
 
+
     container.innerHTML = `
 
+  <div class="survey-page-header">
+
+    <div>
+
+      <h1 class="survey-page-title">
+        Surveys
+      </h1>
+
+      <p class="survey-page-description">
+        Share questions, gather opinions, and see what the Family Hub community thinks.
+      </p>
+
+    </div>
+
+    <div class="survey-page-stat">
+
+      📊
+
+      ${this.surveys.length}
+
       ${
-        isAdmin
-        ? `
+        this.surveys.length === 1
+          ? "survey"
+          : "surveys"
+      }
 
-          <div class="card">
+    </div>
 
-            <h2>
-              Create Survey
-            </h2>
+  </div>
+
+
+  ${
+    isAdmin
+      ? `
+
+        <div class="card survey-create-card">
+
+          <div class="survey-create-header">
+
+            <div class="survey-create-icon">
+              📊
+            </div>
+
+            <div>
+
+              <h2 class="survey-create-title">
+                Create a survey
+              </h2>
+
+              <p class="survey-create-description">
+                Ask the Family Hub community a question and collect their opinions.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div class="survey-form-group">
+
+            <label for="surveyTitle">
+              Survey question
+            </label>
 
             <input
               id="surveyTitle"
-              placeholder="Survey Question"
+              placeholder="e.g. Which device do you use most often?"
             >
 
-            <input
-              id="option1"
-              placeholder="Option 1"
-            >
+          </div>
 
-            <input
-              id="option2"
-              placeholder="Option 2"
-            >
 
-            <input
-              id="option3"
-              placeholder="Option 3"
-            >
+          <div class="survey-options-label">
+
+            <label>
+              Answer options
+            </label>
+
+            <span>
+              At least 2 options required
+            </span>
+
+          </div>
+
+
+          <div class="survey-options-grid">
+
+            <div class="survey-form-group">
+
+              <input
+                id="option1"
+                placeholder="Option 1"
+              >
+
+            </div>
+
+
+            <div class="survey-form-group">
+
+              <input
+                id="option2"
+                placeholder="Option 2"
+              >
+
+            </div>
+
+
+            <div class="survey-form-group">
+
+              <input
+                id="option3"
+                placeholder="Option 3 (optional)"
+              >
+
+            </div>
+
+
+            <div class="survey-form-group">
+
+              <input
+                id="option4"
+                placeholder="Option 4 (optional)"
+              >
+
+            </div>
+
+          </div>
+
+
+          <div class="survey-form-group">
+
+            <label for="surveyExpiry">
+              Survey expiry
+            </label>
 
             <input
               id="surveyExpiry"
               type="date"
             >
+
+          </div>
+
+
+          <div class="survey-create-footer">
+
+            <span class="survey-create-hint">
+              💡 Members can vote once per survey.
+            </span>
 
             <button
               id="createSurveyBtn"
@@ -92,157 +227,725 @@ const SurveysModule = {
 
           </div>
 
+        </div>
+
+      `
+      : ""
+  }
+
+
+  <div class="card survey-search-card">
+
+    <div class="survey-search-wrapper">
+
+      <span class="survey-search-icon">
+        🔍
+      </span>
+
+      <input
+        id="surveySearch"
+        placeholder="Search surveys..."
+      >
+
+    </div>
+
+  </div>
+
+
+  <div id="surveyContainer">
+
+    ${
+      this.surveys.length > 0
+
+        ? this.surveys
+            .map(survey =>
+              this.surveyTemplate(survey)
+            )
+            .join("")
+
+        : `
+
+          <div class="card survey-empty">
+
+            <div class="survey-empty-icon">
+              📊
+            </div>
+
+            <h3>
+              No surveys yet
+            </h3>
+
+            <p>
+              ${
+                isAdmin
+                  ? "Create the first survey and start gathering opinions."
+                  : "There are currently no surveys available."
+              }
+            </p>
+
+          </div>
+
         `
-        : ""
-      }
+    }
 
-      <div id="surveyContainer">
+  </div>
 
-        ${this.surveys
-          .map(survey =>
-            this.surveyTemplate(survey)
-          )
-          .join("")}
-
-      </div>
-
-    `;
+`;
 
     this.attachEvents();
 
   },
 
+
+  /*
+  |--------------------------------------------------------------------------
+  | SURVEY TEMPLATE
+  |--------------------------------------------------------------------------
+  */
+
   surveyTemplate(survey) {
 
-    const totalVotes =
-      survey.options.reduce(
-        (sum, option) =>
-          sum + option.votes,
-        0
-      );
+  const totalVotes =
+    survey.options.reduce(
+      (sum, option) =>
+        sum + Number(option.votes || 0),
+      0
+    );
 
-    const expired =
-      survey.expiry &&
-      new Date(survey.expiry) <
-      new Date();
 
-    return `
+  const expired =
+    survey.expiry &&
+    new Date(
+      survey.expiry + "T23:59:59"
+    ) < new Date();
 
-      <div class="card survey-card">
 
-        <h3>
-          ${survey.title}
-        </h3>
+  const isAdmin =
+    window.currentUser &&
+    (
+      window.currentUser.role === "Admin" ||
+      window.currentUser.role === "Moderator"
+    );
 
-        <p class="desc">
-          Total Votes:
-          ${totalVotes}
-        </p>
 
-        <p class="desc">
-          Ends:
-          ${survey.expiry || "No expiry"}
-        </p>
+  return `
 
-        ${
-          expired
+    <div
+      class="card survey-card"
+      data-survey-title="${(
+        survey.title || ""
+      ).toLowerCase()}"
+    >
+
+      <div class="survey-card-header">
+
+        <div>
+
+          <h3 class="survey-card-title">
+            ${survey.title}
+          </h3>
+
+          <div class="survey-meta">
+
+            <span class="survey-meta-item">
+              👤
+              <span>
+                Created by
+                <strong>
+                  ${survey.createdBy || "Unknown"}
+                </strong>
+              </span>
+            </span>
+
+            <span class="survey-meta-item">
+              🗳
+              <span>
+                <strong>
+                  ${totalVotes}
+                </strong>
+                ${totalVotes === 1 ? "vote" : "votes"}
+              </span>
+            </span>
+
+            <span class="survey-meta-item">
+              📅
+              <span>
+                ${
+                  survey.expiry
+                    ? `Ends ${survey.expiry}`
+                    : "No expiry"
+                }
+              </span>
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <span
+          class="survey-status ${
+            expired ? "closed" : ""
+          }"
+        >
+
+          ${
+            expired
+              ? "Closed"
+              : "Active"
+          }
+
+        </span>
+
+      </div>
+
+
+      ${
+        expired
           ? `
+
             <div class="expired-survey">
-              ⏰ Survey Closed
+
+              ⏰
+              This survey is now closed.
+
             </div>
+
           `
           : ""
-        }
+      }
 
-        ${survey.options.map(option => {
 
-          const percentage =
-            totalVotes > 0
-            ? Math.round(
-                (option.votes / totalVotes) * 100
-              )
-            : 0;
+      ${
+        survey.hasVoted && !expired
+          ? `
 
-          return `
+            <div class="survey-voted-message">
 
-            <div class="survey-option">
+              <span>✓</span>
 
-              <button
-                class="action-btn vote-btn"
-                data-survey="${survey.id}"
-                data-option="${option.text}"
-                ${
-                  expired
-                  ? "disabled"
-                  : ""
-                }
-              >
-
-                ${option.text}
-                (${option.votes})
-
-                ${
-                  totalVotes > 0
-                  ? Math.round(
-                      (option.votes / totalVotes) * 100
-                    )
-                  : 0
-                }%
-
-              </button>
-
-              <div class="vote-bar">
-
-                <div
-                  class="vote-fill"
-                  style="width:${percentage}%"
-                ></div>
-
-              </div>
-
-              <small>
-
-                ${option.votes} votes
-                (${percentage}%)
-
-              </small>
+              You have already voted in this survey.
 
             </div>
 
-          `;
+          `
+          : ""
+      }
 
-        }).join("")}
+
+      <div class="survey-options">
 
         ${
-          ["Admin","Moderator"]
-          .includes(
-            window.currentUser.role
-          )
+          survey.options
+            .map(option => {
 
+              const votes =
+                Number(
+                  option.votes || 0
+                );
+
+
+              const percentage =
+                totalVotes > 0
+                  ? Math.round(
+                      (
+                        votes /
+                        totalVotes
+                      ) * 100
+                    )
+                  : 0;
+
+
+              return `
+
+                <div class="survey-option">
+
+                  <button
+
+                    class="vote-btn"
+
+                    data-survey="${survey.id}"
+
+                    data-option="${option.id}"
+
+                    ${
+                      expired ||
+                      survey.hasVoted
+                        ? "disabled"
+                        : ""
+                    }
+
+                  >
+
+                    ${option.text}
+
+                    <span>
+                      ${votes}
+                    </span>
+
+                  </button>
+
+
+                  <div class="vote-bar">
+
+                    <div
+                      class="vote-fill"
+                      style="width:${percentage}%"
+                    ></div>
+
+                  </div>
+
+
+                  <small>
+
+                    ${percentage}%
+
+                  </small>
+
+                </div>
+
+              `;
+
+            })
+            .join("")
+        }
+
+      </div>
+
+
+      ${
+        isAdmin
           ? `
 
             <button
+
               class="delete-survey-btn"
+
               data-id="${survey.id}"
+
             >
 
-              🗑 Delete Survey
+              🗑 Delete survey
 
             </button>
 
           `
           : ""
+      }
+
+    </div>
+
+  `;
+
+},
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | CREATE SURVEY
+  |--------------------------------------------------------------------------
+  */
+
+  async createSurvey() {
+
+    const title =
+      document
+        .getElementById("surveyTitle")
+        .value
+        .trim();
+
+
+    const expiry =
+      document
+        .getElementById("surveyExpiry")
+        .value;
+
+
+    const optionInputs = [
+      "option1",
+      "option2",
+      "option3",
+      "option4"
+    ];
+
+
+    const options =
+      optionInputs
+        .map(id => {
+
+          return document
+            .getElementById(id)
+            ?.value
+            .trim();
+
+        })
+        .filter(Boolean);
+
+
+    if (!title) {
+
+      alert(
+        "Please enter a survey question."
+      );
+
+      return;
+
+    }
+
+
+    if (options.length < 2) {
+
+      alert(
+        "Please provide at least two options."
+      );
+
+      return;
+
+    }
+
+
+    try {
+
+      const response = await fetch(
+
+        "php/api/surveys.php?action=create",
+
+        {
+
+          method: "POST",
+
+          credentials: "include",
+
+          headers: {
+
+            "Content-Type":
+              "application/json"
+
+          },
+
+          body: JSON.stringify({
+
+            title,
+
+            expiry,
+
+            options
+
+          })
+
         }
 
-      </div>
+      );
 
-    `;
+
+      const result =
+        await response.json();
+
+
+      if (!result.success) {
+
+        alert(
+          result.message ||
+          "Could not create survey."
+        );
+
+        return;
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | NOTIFICATION
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        typeof NotificationModule !==
+        "undefined"
+      ) {
+
+        NotificationModule.add(
+          `New survey created: ${title}`,
+          "survey",
+          "📊"
+        );
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | FEED POST
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        typeof FeedModule !==
+        "undefined"
+      ) {
+
+        FeedModule.posts =
+          FeedModule.posts || [];
+
+
+        FeedModule.posts.unshift({
+
+          id:
+            Date.now(),
+
+          author:
+            "Survey System",
+
+          role:
+            "System",
+
+          time:
+            "Just now",
+
+          content:
+            `📊 New Survey Created: ${title}`,
+
+          media:
+            "",
+
+          likes:
+            0,
+
+          likedByUser:
+            false,
+
+          comments:
+            []
+
+        });
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | REFRESH
+      |--------------------------------------------------------------------------
+      */
+
+      await this.render(
+        document.getElementById(
+          "contentArea"
+        )
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        "Create survey error:",
+        error
+      );
+
+      alert(
+        "Something went wrong while creating the survey."
+      );
+
+    }
+
   },
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | VOTE
+  |--------------------------------------------------------------------------
+  */
+
+  async voteSurvey(
+    surveyId,
+    optionId
+  ) {
+
+    try {
+
+      const response = await fetch(
+
+        "php/api/surveys.php?action=vote",
+
+        {
+
+          method: "POST",
+
+          credentials: "include",
+
+          headers: {
+
+            "Content-Type":
+              "application/json"
+
+          },
+
+          body: JSON.stringify({
+
+            survey_id:
+              Number(surveyId),
+
+            option_id:
+              Number(optionId)
+
+          })
+
+        }
+
+      );
+
+
+      const result =
+        await response.json();
+
+
+      if (!result.success) {
+
+        alert(
+          result.message ||
+          "Unable to record your vote."
+        );
+
+        return;
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | REFRESH RESULTS
+      |--------------------------------------------------------------------------
+      */
+
+      await this.render(
+        document.getElementById(
+          "contentArea"
+        )
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        "Voting error:",
+        error
+      );
+
+      alert(
+        "Something went wrong while voting."
+      );
+
+    }
+
+  },
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | DELETE SURVEY
+  |--------------------------------------------------------------------------
+  */
+
+  async deleteSurvey(
+    surveyId
+  ) {
+
+    if (
+      !confirm(
+        "Are you sure you want to delete this survey?"
+      )
+    ) {
+
+      return;
+
+    }
+
+
+    try {
+
+      const response = await fetch(
+
+        "php/api/surveys.php?action=delete",
+
+        {
+
+          method: "POST",
+
+          credentials: "include",
+
+          headers: {
+
+            "Content-Type":
+              "application/json"
+
+          },
+
+          body: JSON.stringify({
+
+            id:
+              Number(surveyId)
+
+          })
+
+        }
+
+      );
+
+
+      const result =
+        await response.json();
+
+
+      if (!result.success) {
+
+        alert(
+          result.message ||
+          "Unable to delete survey."
+        );
+
+        return;
+
+      }
+
+
+      await this.render(
+        document.getElementById(
+          "contentArea"
+        )
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        "Delete survey error:",
+        error
+      );
+
+      alert(
+        "Something went wrong while deleting the survey."
+      );
+
+    }
+
+  },
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | EVENTS
+  |--------------------------------------------------------------------------
+  */
 
   attachEvents() {
 
+
     /*
-    CREATE SURVEY
+    |--------------------------------------------------------------------------
+    | CREATE
+    |--------------------------------------------------------------------------
     */
 
     document
@@ -253,129 +956,16 @@ const SurveysModule = {
         "click",
         () => {
 
-          const title =
-            document
-              .getElementById(
-                "surveyTitle"
-              )
-              .value
-              .trim();
-
-          const option1 =
-            document
-              .getElementById(
-                "option1"
-              )
-              .value
-              .trim();
-
-          const option2 =
-            document
-              .getElementById(
-                "option2"
-              )
-              .value
-              .trim();
-
-          const option3 =
-            document
-              .getElementById(
-                "option3"
-              )
-              .value
-              .trim();
-
-          const expiry =
-            document
-              .getElementById(
-                "surveyExpiry"
-              )
-              .value;
-
-          if (
-            !title ||
-            !option1 ||
-            !option2
-          ) {
-            return;
-          }
-
-          this.surveys.unshift({
-
-            id: Date.now(),
-
-            title,
-
-            expiry,
-
-            createdBy:
-              window.currentUser.name,
-
-            votedUsers: [],
-
-            options: [
-
-              {
-                text: option1,
-                votes: 0
-              },
-
-              {
-                text: option2,
-                votes: 0
-              },
-
-              {
-                text: option3,
-                votes: 0
-              }
-
-            ]
-
-          });
-
-          NotificationModule.add(
-            `📊 New Survey Created: ${title}`
-          );
-
-          /*
-          AUTO POST TO FEED
-          */
-
-          FeedModule.posts.unshift({
-
-            id: Date.now() + 1,
-
-            author: "Survey System",
-
-            role: "System",
-
-            time: "Just now",
-
-            content:
-              `📊 New Survey Created: ${title}`,
-
-            media: "",
-
-            likes: 0,
-
-            likedByUser: false,
-
-            comments: []
-
-          });
-
-          this.render(
-            document.getElementById(
-              "contentArea"
-            )
-          );
+          this.createSurvey();
 
         }
       );
 
+
     /*
-    VOTING
+    |--------------------------------------------------------------------------
+    | VOTING
+    |--------------------------------------------------------------------------
     */
 
     document
@@ -388,64 +978,12 @@ const SurveysModule = {
           "click",
           () => {
 
-            const survey =
-              this.surveys.find(
-                s =>
-                  s.id ===
-                  Number(
-                    btn.dataset.survey
-                  )
-              );
+            this.voteSurvey(
 
-            if (!survey) return;
+              btn.dataset.survey,
 
-            const expired =
-              survey.expiry &&
-              new Date(
-                survey.expiry
-              ) < new Date();
+              btn.dataset.option
 
-            if (expired) {
-
-              alert(
-                "This survey has expired."
-              );
-
-              return;
-            }
-
-            if (
-              survey.votedUsers.includes(
-                window.currentUser.name
-              )
-            ) {
-
-              alert(
-                "You already voted."
-              );
-
-              return;
-            }
-
-            const option =
-              survey.options.find(
-                o =>
-                  o.text ===
-                  btn.dataset.option
-              );
-
-            if (!option) return;
-
-            option.votes++;
-
-            survey.votedUsers.push(
-              window.currentUser.name
-            );
-
-            this.render(
-              document.getElementById(
-                "contentArea"
-              )
             );
 
           }
@@ -453,8 +991,11 @@ const SurveysModule = {
 
       });
 
+
     /*
-    DELETE SURVEY
+    |--------------------------------------------------------------------------
+    | DELETE
+    |--------------------------------------------------------------------------
     */
 
     document
@@ -467,27 +1008,56 @@ const SurveysModule = {
           "click",
           () => {
 
-            const id =
-              Number(
-                btn.dataset.id
-              );
-
-            this.surveys =
-              this.surveys.filter(
-                survey =>
-                  survey.id !== id
-              );
-
-            this.render(
-              document.getElementById(
-                "contentArea"
-              )
+            this.deleteSurvey(
+              btn.dataset.id
             );
 
           }
         );
 
       });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SEARCH
+    |--------------------------------------------------------------------------
+    */
+
+    document
+      .getElementById(
+        "surveySearch"
+      )
+      ?.addEventListener(
+        "input",
+        event => {
+
+          const search =
+            event.target.value
+              .toLowerCase()
+              .trim();
+
+
+          document
+            .querySelectorAll(
+              ".survey-card"
+            )
+            .forEach(card => {
+
+              const title =
+                card.dataset
+                  .surveyTitle || "";
+
+
+              card.style.display =
+                title.includes(search)
+                ? ""
+                : "none";
+
+            });
+
+        }
+      );
 
   }
 

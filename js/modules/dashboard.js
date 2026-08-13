@@ -1,287 +1,833 @@
 const DashboardModule = {
 
-  render(container) {
+  /*
+  |--------------------------------------------------------------------------
+  | DASHBOARD DATA
+  |--------------------------------------------------------------------------
+  */
 
-const nextEvent =
-  EventsModule?.events?.[0];
+  getData() {
 
-    const totalPosts =
-      FeedModule?.posts?.length || 0;
+    const currentUser =
+      window.currentUser || {};
 
-    const totalServices =
-  DirectoryModule?.services?.length || 0;  
+    const posts =
+      window.FeedModule?.posts || [];
 
-    const totalEvents =
-      EventsModule?.events?.length || 0;
+    const events =
+      window.EventsModule?.events || [];
 
-    const totalChats =
-      MessagesModule?.chats?.length || 0;
+    const services =
+      window.DirectoryModule?.services || [];
 
-    const totalSurveys =
-      SurveysModule?.surveys?.length || 0;
+    const chats =
+      window.MessagesModule?.chats || [];
 
-    const latestPosts =
-      FeedModule?.posts?.slice(0, 2) || [];
+    const surveys =
+      window.SurveysModule?.surveys || [];
 
-    const upcomingEvent =
-      EventsModule?.events?.[0];
+    return {
+
+      currentUser,
+      posts,
+      events,
+      services,
+      chats,
+      surveys,
+
+      totalPosts:
+        posts.length,
+
+      totalEvents:
+        events.length,
+
+      totalServices:
+        services.length,
+
+      totalChats:
+        chats.length,
+
+      totalSurveys:
+        surveys.length,
+
+      latestPosts:
+        posts.slice(0, 3),
+
+      upcomingEvent:
+        events[0] || null,
+
+      featuredSurvey:
+        surveys[0] || null
+
+    };
+
+  },
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | RENDER
+  |--------------------------------------------------------------------------
+  */
+
+  async render(container) {
+
+    const data =
+      this.getData();
+
+
+    const userName =
+      data.currentUser.name ||
+      data.currentUser.full_name ||
+      "Guest";
+
+
+    const userRole =
+      data.currentUser.role ||
+      "Member";
+
 
     container.innerHTML = `
 
-      <!-- HERO -->
+      <!-- =====================================================
+           HERO
+      ====================================================== -->
 
-      <div class="hero-section">
+      <section class="hero-section dashboard-hero">
 
-        <div>
+        <div class="dashboard-hero-content">
+
+          <span class="dashboard-eyebrow">
+            🏠 Family Hub
+          </span>
 
           <h1>
-            Welcome back ${
-              window.currentUser?.name || "Guest"
-            } 👋🏾
+            Welcome back, ${userName} 👋🏾
           </h1>
 
           <p class="desc">
-            Bringing families, services,
-            communication and support
-            together in one smart hub.
+            Your community, services, events and
+            conversations — all in one place.
           </p>
 
-          <button
-            class="primary-btn"
-            id="exploreFeedBtn"
-          >
-            Explore Community
-          </button>
+          <div class="dashboard-hero-actions">
+
+            <button
+              class="primary-btn"
+              id="exploreFeedBtn"
+            >
+              📰 Explore Community
+            </button>
+
+            <button
+              class="dashboard-secondary-btn"
+              id="viewEventsBtn"
+            >
+              📅 View Events
+            </button>
+
+          </div>
 
         </div>
 
-        <div class="hero-badge">
-          🏠 Family Hub
+        <div class="hero-badge dashboard-hero-badge">
+          <span>🏡</span>
+          <strong>Family Hub</strong>
+          <small>
+            Connected community
+          </small>
         </div>
 
-      </div>
+      </section>
 
-      <!-- STATS -->
 
-      <div class="stats-grid">
+      <!-- =====================================================
+           STATISTICS
+      ====================================================== -->
 
-        <div class="card stat-card">
+      <section class="stats-grid dashboard-stats">
+
+        <div
+          class="card stat-card dashboard-stat-card"
+          data-page="events"
+        >
 
           <div class="stat-icon">
             📅
           </div>
 
-          <h2>${totalEvents}</h2>
+          <h2>
+            ${data.totalEvents}
+          </h2>
 
-          <p>Upcoming Events</p>
+          <p>
+            Upcoming Events
+          </p>
 
         </div>
 
-        <div class="card stat-card">
+
+        <div
+          class="card stat-card dashboard-stat-card"
+          data-page="messages"
+        >
 
           <div class="stat-icon">
             💬
           </div>
 
-          <h2>${totalChats}</h2>
+          <h2>
+            ${data.totalChats}
+          </h2>
 
-          <p>Conversations</p>
+          <p>
+            Conversations
+          </p>
 
         </div>
 
-        <div class="card stat-card">
+
+        <div
+          class="card stat-card dashboard-stat-card"
+          data-page="directory"
+        >
 
           <div class="stat-icon">
             📍
           </div>
 
-          <h2>${totalServices}</h2>
+          <h2>
+            ${data.totalServices}
+          </h2>
 
-          <p>Support Services</p>
+          <p>
+            Support Services
+          </p>
 
         </div>
 
-        <div class="card stat-card">
+
+        <div
+          class="card stat-card dashboard-stat-card"
+          data-page="feed"
+        >
 
           <div class="stat-icon">
             📰
           </div>
 
-          <h2>${totalPosts}</h2>
+          <h2>
+            ${data.totalPosts}
+          </h2>
 
-          <p>Community Posts</p>
+          <p>
+            Community Posts
+          </p>
 
         </div>
 
-      </div>
+      </section>
 
-      <!-- CONTENT GRID -->
 
-      <div class="dashboard-grid">
+      <!-- =====================================================
+           DASHBOARD CONTENT
+      ====================================================== -->
 
-        <!-- FEED PREVIEW -->
+      <section class="dashboard-grid">
 
-        <div>
 
-          <div class="card">
+        <!-- =================================================
+             LEFT COLUMN
+        ================================================== -->
 
-            <h2>
-              Community Updates
-            </h2>
+        <div class="dashboard-main">
 
-            <p class="desc">
-              Latest posts from families
-            </p>
 
-          </div>
+          <!-- COMMUNITY UPDATES -->
 
-          ${latestPosts.map(post => `
+          <div class="card dashboard-section-card">
 
-            <div class="card post-preview">
+            <div class="dashboard-section-header">
 
-              <div class="post-top">
+              <div>
 
-                <div class="avatar">
-                  ${post.author.charAt(0)}
-                </div>
+                <h2>
+                  📰 Community Updates
+                </h2>
 
-                <div>
-
-                  <h4>
-                    ${post.author}
-                  </h4>
-
-                  <span>
-                    ${post.time}
-                  </span>
-
-                </div>
+                <p class="desc">
+                  Latest conversations from Family Hub
+                </p>
 
               </div>
 
-              <p>
-                ${post.content}
-              </p>
+              <button
+                class="dashboard-link-btn"
+                id="viewFeedBtn"
+              >
+                View all →
+              </button>
 
             </div>
 
-          `).join("")}
+          </div>
+
+
+          ${
+            data.latestPosts.length > 0
+
+            ?
+
+            data.latestPosts
+              .map(post => {
+
+                const author =
+                  post.author ||
+                  "Family Hub Member";
+
+                const initial =
+                  author
+                    .charAt(0)
+                    .toUpperCase();
+
+                return `
+
+                  <div
+                    class="card post-preview dashboard-post-card"
+                  >
+
+                    <div class="post-top">
+
+                      <div class="avatar">
+                        ${initial}
+                      </div>
+
+                      <div>
+
+                        <h4>
+                          ${author}
+                        </h4>
+
+                        <span>
+                          ${post.time || "Recently"}
+                        </span>
+
+                      </div>
+
+                    </div>
+
+                    <p class="dashboard-post-content">
+                      ${post.content || ""}
+                    </p>
+
+                  </div>
+
+                `;
+
+              })
+              .join("")
+
+            :
+
+            `
+
+              <div class="card dashboard-empty-card">
+
+                <div class="dashboard-empty-icon">
+                  📰
+                </div>
+
+                <h3>
+                  No community updates yet
+                </h3>
+
+                <p class="desc">
+                  Be the first to share something
+                  with the Family Hub community.
+                </p>
+
+                <button
+                  class="primary-btn"
+                  id="createPostFromDashboard"
+                >
+                  Create a Post
+                </button>
+
+              </div>
+
+            `
+
+          }
+
+
+          <!-- QUICK ACCESS -->
+
+          <div class="card dashboard-quick-card">
+
+            <div class="dashboard-section-header">
+
+              <div>
+
+                <h2>
+                  ⚡ Quick Access
+                </h2>
+
+                <p class="desc">
+                  Jump straight into Family Hub
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div class="dashboard-quick-grid">
+
+              <button
+                class="dashboard-quick-btn"
+                data-page="feed"
+              >
+                <span>📰</span>
+                <strong>Community</strong>
+                <small>See latest posts</small>
+              </button>
+
+
+              <button
+                class="dashboard-quick-btn"
+                data-page="messages"
+              >
+                <span>💬</span>
+                <strong>Messages</strong>
+                <small>Open conversations</small>
+              </button>
+
+
+              <button
+                class="dashboard-quick-btn"
+                data-page="events"
+              >
+                <span>📅</span>
+                <strong>Events</strong>
+                <small>See upcoming events</small>
+              </button>
+
+
+              <button
+                class="dashboard-quick-btn"
+                data-page="directory"
+              >
+                <span>📍</span>
+                <strong>Directory</strong>
+                <small>Find services</small>
+              </button>
+
+            </div>
+
+          </div>
+
 
         </div>
 
-        <!-- RIGHT PANEL -->
 
-        <div>
+        <!-- =================================================
+             RIGHT COLUMN
+        ================================================== -->
 
-          <div class="card">
+        <div class="dashboard-sidebar">
 
-            <h3>
-              📅 Upcoming Event
-            </h3>
+
+          <!-- UPCOMING EVENT -->
+
+          <div class="card dashboard-side-card">
+
+            <div class="dashboard-section-header">
+
+              <div>
+
+                <h3>
+                  📅 Upcoming Event
+                </h3>
+
+              </div>
+
+              <button
+                class="dashboard-icon-link"
+                id="dashboardEventsBtn"
+              >
+                →
+              </button>
+
+            </div>
+
 
             ${
-              upcomingEvent
-              ? `
-                <div class="event-box">
+              data.upcomingEvent
+
+              ?
+
+              `
+
+                <div class="event-box dashboard-event-box">
+
+                  <span class="dashboard-mini-label">
+                    NEXT EVENT
+                  </span>
 
                   <strong>
-                    ${nextEvent?.title || "No Events"}
+                    ${data.upcomingEvent.title || "Untitled Event"}
                   </strong>
 
                   <p class="desc">
-                    ${nextEvent?.date || ""}
-                    </p>
+                    📅
+                    ${data.upcomingEvent.date || "Date not available"}
+                  </p>
 
                   <p class="desc">
-                    ${upcomingEvent.location}
+                    📍
+                    ${data.upcomingEvent.location || "Location not available"}
                   </p>
 
                 </div>
+
               `
-              : `
-                <p>
-                  No events available.
-                </p>
+
+              :
+
               `
+
+                <div class="dashboard-empty-small">
+
+                  <span>
+                    📅
+                  </span>
+
+                  <p>
+                    No upcoming events.
+                  </p>
+
+                </div>
+
+              `
+
             }
 
           </div>
 
-          <div class="card">
 
-              <h3>
-                📊 Featured Survey
-              </h3>
+          <!-- FEATURED SURVEY -->
 
-              <p>
+          <div class="card dashboard-side-card">
 
-                ${
-                  SurveysModule.surveys[0]
-                  ? SurveysModule.surveys[0].title
-                  : "No surveys available"
-                }
+            <div class="dashboard-section-header">
 
-              </p>
+              <div>
+
+                <h3>
+                  📊 Featured Survey
+                </h3>
+
+              </div>
+
+              <button
+                class="dashboard-icon-link"
+                id="dashboardSurveysBtn"
+              >
+                →
+              </button>
+
+            </div>
+
+
+            ${
+              data.featuredSurvey
+
+              ?
+
+              `
+
+                <div class="dashboard-survey-preview">
+
+                  <strong>
+                    ${data.featuredSurvey.title}
+                  </strong>
+
+                  <p class="desc">
+
+                    ${
+                      data.featuredSurvey.options
+                        ?.reduce(
+                          (sum, option) =>
+                            sum +
+                            Number(option.votes || 0),
+                          0
+                        ) || 0
+                    }
+
+                    total votes
+
+                  </p>
+
+                  <button
+                    class="dashboard-survey-btn"
+                    id="openSurveyBtn"
+                  >
+                    View Survey →
+                  </button>
+
+                </div>
+
+              `
+
+              :
+
+              `
+
+                <div class="dashboard-empty-small">
+
+                  <span>
+                    📊
+                  </span>
+
+                  <p>
+                    No surveys available.
+                  </p>
+
+                </div>
+
+              `
+
+            }
+
+          </div>
+
+
+          <!-- USER -->
+
+          <div class="card dashboard-side-card">
+
+            <div class="dashboard-user-card">
+
+              <div class="avatar dashboard-user-avatar">
+                ${userName.charAt(0).toUpperCase()}
+              </div>
+
+              <div>
+
+                <h3>
+                  ${userName}
+                </h3>
+
+                <span class="dashboard-role">
+                  ${userRole}
+                </span>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- DASHBOARD MESSAGE -->
+
+          <div class="card dashboard-tip-card">
+
+            <span>
+              💡
+            </span>
+
+            <div>
+
+              <strong>
+                Stay connected
+              </strong>
 
               <p class="desc">
-
-                ${
-                  SurveysModule.surveys[0]
-                  ? SurveysModule.surveys[0].options.reduce(
-                      (sum,opt) =>
-                        sum + opt.votes,
-                      0
-                    )
-                  : 0
-                }
-
-                votes
-
+                Check your messages and
+                community updates regularly.
               </p>
 
             </div>
 
-          <div class="card">
-
-            <h3>
-              👤 Logged In User
-            </h3>
-
-            <p>
-              ${
-                window.currentUser?.name || "Guest"
-              }
-            </p>
-
-            <p class="desc">
-              ${
-                window.currentUser?.role || "Visitor"
-              }
-            </p>
-
           </div>
+
 
         </div>
 
-        
-
-      </div>
+      </section>
 
     `;
 
+
     this.attachEvents();
+
   },
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | EVENTS
+  |--------------------------------------------------------------------------
+  */
 
   attachEvents() {
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | FEED
+    |--------------------------------------------------------------------------
+    */
+
     document
       .getElementById("exploreFeedBtn")
-      ?.addEventListener("click", () => {
+      ?.addEventListener(
+        "click",
+        () => {
 
-        renderPage("feed");
+          renderPage("feed");
+
+        }
+      );
+
+
+    document
+      .getElementById("viewFeedBtn")
+      ?.addEventListener(
+        "click",
+        () => {
+
+          renderPage("feed");
+
+        }
+      );
+
+
+    document
+      .getElementById("createPostFromDashboard")
+      ?.addEventListener(
+        "click",
+        () => {
+
+          renderPage("feed");
+
+        }
+      );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | EVENTS
+    |--------------------------------------------------------------------------
+    */
+
+    document
+      .getElementById("viewEventsBtn")
+      ?.addEventListener(
+        "click",
+        () => {
+
+          renderPage("events");
+
+        }
+      );
+
+
+    document
+      .getElementById("dashboardEventsBtn")
+      ?.addEventListener(
+        "click",
+        () => {
+
+          renderPage("events");
+
+        }
+      );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SURVEYS
+    |--------------------------------------------------------------------------
+    */
+
+    document
+      .getElementById("dashboardSurveysBtn")
+      ?.addEventListener(
+        "click",
+        () => {
+
+          renderPage("surveys");
+
+        }
+      );
+
+
+    document
+      .getElementById("openSurveyBtn")
+      ?.addEventListener(
+        "click",
+        () => {
+
+          renderPage("surveys");
+
+        }
+      );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | STAT CARDS
+    |--------------------------------------------------------------------------
+    */
+
+    document
+      .querySelectorAll(
+        ".dashboard-stat-card[data-page]"
+      )
+      .forEach(card => {
+
+        card.addEventListener(
+          "click",
+          () => {
+
+            renderPage(
+              card.dataset.page
+            );
+
+          }
+        );
+
+      });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | QUICK ACCESS
+    |--------------------------------------------------------------------------
+    */
+
+    document
+      .querySelectorAll(
+        ".dashboard-quick-btn[data-page]"
+      )
+      .forEach(button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            renderPage(
+              button.dataset.page
+            );
+
+          }
+        );
 
       });
 
   }
 
 };
+

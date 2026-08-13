@@ -1,43 +1,10 @@
 const EventsModule = {
 
-  events: [
+  events: [],
 
-    {
-  id: 1,
-  title: "Family Wellness Day",
-  category: "Health",
-  date: "2026-04-15",
-  location: "Community Hall",
-  description:
-    "Join families for wellness activities, health talks and support sessions.",
+  async render(container) {
 
-  createdBy: "Tyson",
-
-  responses: {
-    Tyson: "going",
-    Sarah: "maybe"
-  }
-},
-
-{
-  id: 2,
-  title: "Parenting Workshop",
-  category: "Education",
-  date: "2026-04-20",
-  location: "Family Centre",
-  description:
-    "Learn practical parenting skills and connect with other families.",
-
-  createdBy: "Sarah",
-
-  responses: {
-    Sarah: "going"
-  }
-}
-
-  ],
-
-  render(container) {
+    await this.loadEvents();
 
     const isAdmin =
       window.currentUser &&
@@ -61,11 +28,6 @@ const EventsModule = {
               <input
                 id="eventTitle"
                 placeholder="Event Title"
-              >
-
-              <input
-                id="eventCategory"
-                placeholder="Category"
               >
 
               <input
@@ -107,7 +69,7 @@ const EventsModule = {
             <div class="mini-event">
 
               <strong>
-                ${event.date}
+                ${event.event_date}
               </strong>
 
               <p>
@@ -122,33 +84,19 @@ const EventsModule = {
 
         <div class="card">
 
-  <h2>
-    Event Calendar
-  </h2>
+    <div class="calendar-header">
 
-  <div class="event-calendar">
+        <button id="prevMonth">◀</button>
 
-    ${this.events.map(event => `
+        <h2 id="calendarTitle"></h2>
 
-      <div
-        class="calendar-day"
-        data-id="${event.id}"
-      >
+        <button id="nextMonth">▶</button>
 
-        <strong>
-          ${new Date(event.date)
-            .getDate()}
-        </strong>
+    </div>
 
-        <span>
-          ${event.title}
-        </span>
+    <div class="calendar-grid" id="calendarGrid">
 
-      </div>
-
-    `).join("")}
-
-  </div>
+    </div>
 
 </div>
 
@@ -158,6 +106,19 @@ const EventsModule = {
 
             <div class="card event-card">
 
+            <div class="event-cover">
+
+    <img
+        src="${
+            event.image
+            ? event.image
+            : 'assets/images/default-event.jpeg'
+        }"
+        alt="Event Cover"
+    >
+
+</div>
+
               <div class="event-header">
 
                 <h3>
@@ -165,17 +126,32 @@ const EventsModule = {
                 </h3>
 
                 <span class="event-category">
-                  ${event.category}
+                📅 Event
                 </span>
 
               </div>
 
               <p class="desc">
-                📅 ${event.date}
+               📅 ${event.event_date}
+
+                <br>
+
+                            <div class="event-countdown">
+
+            ⏳ ${this.getCountdown(event.event_date)}
+
+            </div>
               </p>
 
               <p class="desc">
-                📍 ${event.location}
+                📍
+                <a
+                href="https://www.google.com/maps/search/${encodeURIComponent(event.location)}"
+                target="_blank"
+                class="event-location-link"
+                >
+                ${event.location}
+                </a>
               </p>
 
               <p>
@@ -183,7 +159,7 @@ const EventsModule = {
                 </p>
 
                 <p class="desc">
-                  Created by ${event.createdBy}
+                 Created by ${event.full_name}
                 </p>
 
                 ${
@@ -216,40 +192,27 @@ const EventsModule = {
                   class="action-btn going-btn"
                   data-id="${event.id}"
                 >
-                  ✅ Going (${
-                    Object.values(
-                      event.responses || {}
-                    ).filter(
-                      r => r === "going"
-                    ).length
-                  })
+                  ✅ Going (${event.going_count})
                 </button>
 
                 <button
                   class="action-btn maybe-btn"
                   data-id="${event.id}"
                 >
-                  🤔 Maybe (${
-                    Object.values(
-                      event.responses || {}
-                    ).filter(
-                      r => r === "maybe"
-                    ).length
-                  })
+                 🤔 Maybe (${event.maybe_count})
                 </button>
 
                 <button
                   class="action-btn notgoing-btn"
                   data-id="${event.id}"
                 >
-                  ❌ Can't (${
-                    Object.values(
-                      event.responses || {}
-                    ).filter(
-                      r => r === "notGoing"
-                    ).length
-                  })
+                  ❌ Can't (${event.notgoing_count})
                 </button>
+
+              </div>
+              <div class="event-attendees">
+
+              ${this.renderAttendees(event.attendees)}
 
               </div>
 
@@ -261,12 +224,9 @@ const EventsModule = {
 
       </div>
 
-      <div
-  id="eventModal"
-  class="modal hidden"
->
+      <div id="eventModal" class="event-modal hidden">
 
-  <div class="modal-box">
+  <div class="event-modal-box">
 
     <div id="eventModalContent">
 
@@ -279,19 +239,170 @@ const EventsModule = {
     `;
 
     this.attachEvents();
+    this.renderCalendar();
+
+    document
+    .getElementById("prevMonth")
+    ?.addEventListener("click",()=>{
+
+    this.currentMonth.setMonth(
+    this.currentMonth.getMonth()-1
+    );
+
+    this.renderCalendar();
+
+    });
+
+    document
+    .getElementById("nextMonth")
+    ?.addEventListener("click",()=>{
+
+    this.currentMonth.setMonth(
+    this.currentMonth.getMonth()+1
+    );
+
+    this.renderCalendar();
+
+    });
   },
+
+  async loadEvents(){
+
+    const response = await fetch(
+
+        "php/api/events.php",
+
+        {
+            credentials:"include"
+        }
+
+    );
+
+    const result = await response.json();
+
+    if(!result.success) return;
+
+    this.events = result.data;
+
+},
+
+currentMonth: new Date(),
+
+renderCalendar(){
+
+const grid =
+document.getElementById("calendarGrid");
+
+const title =
+document.getElementById("calendarTitle");
+
+if(!grid) return;
+
+grid.innerHTML = "";
+
+const year =
+this.currentMonth.getFullYear();
+
+const month =
+this.currentMonth.getMonth();
+
+title.textContent =
+this.currentMonth.toLocaleString(
+"default",
+{
+month:"long",
+year:"numeric"
+}
+);
+
+const firstDay =
+new Date(year,month,1).getDay();
+
+const daysInMonth =
+new Date(year,month+1,0).getDate();
+
+const week =
+["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+week.forEach(day=>{
+
+grid.innerHTML +=
+`<div class="weekday">${day}</div>`;
+
+});
+
+for(let i=0;i<firstDay;i++){
+
+grid.innerHTML +=
+`<div class="empty"></div>`;
+
+}
+
+for(let day=1;day<=daysInMonth;day++){
+
+const event =
+this.events.find(e=>{
+
+const d =
+new Date(e.event_date);
+
+return d.getDate()==day &&
+d.getMonth()==month &&
+d.getFullYear()==year;
+
+});
+
+grid.innerHTML += `
+
+<div
+class="calendar-cell ${event?"has-event":""}"
+${event?`data-id="${event.id}"`:""}>
+
+<div class="day-number">
+
+${day}
+
+</div>
+
+${event?
+
+`<small>${event.title}</small>`
+
+:""}
+
+</div>
+
+`;
+
+}
+
+grid
+.querySelectorAll(".has-event")
+.forEach(cell=>{
+
+cell.onclick=()=>{
+
+const id=cell.dataset.id;
+
+document
+.querySelector(
+`.calendar-day[data-id="${id}"]`
+)?.click();
+
+};
+
+});
+
+},
 
   attachEvents() {
 
     document
   .getElementById("createEventBtn")
-  ?.addEventListener("click", () => {
+  ?.addEventListener("click", async () => {
 
     const title =
       document.getElementById("eventTitle").value.trim();
-
-    const category =
-      document.getElementById("eventCategory").value.trim();
 
     const date =
       document.getElementById("eventDate").value;
@@ -303,15 +414,50 @@ const EventsModule = {
       document.getElementById("eventDescription").value.trim();
 
     if(
-      !title ||
-      !category ||
-      !date ||
-      !location
+    !title ||
+    !date ||
+    !location
     ) return;
 
-    this.events.unshift({
+    const form = new FormData();
 
-      /*const announcement =
+form.append("title",title);
+
+form.append("description",description);
+
+form.append("location",location);
+
+form.append("event_date",date);
+
+form.append("event_time","");
+
+const response = await fetch(
+
+    "php/api/create_event.php",
+
+    {
+
+        method:"POST",
+
+        body:form,
+
+        credentials:"include"
+
+    }
+
+);
+
+const result = await response.json();
+
+if(result.success){
+
+    this.render(
+        document.getElementById("contentArea")
+    );
+
+}
+
+    /*const announcement =
 MessagesModule.chats.find(
 c => c.id === 999
 );
@@ -338,53 +484,7 @@ announcement.unread++;
 
 }*/
 
-      id: Date.now(),
-
-      title,
-
-      category,
-
-      date,
-
-      location,
-
-      description,
-
-      createdBy:
-        window.currentUser.name,
-
-      responses: {}
-
-    });
-
-    const announcement =
-MessagesModule.chats.find(
-c => c.id === 999
-);
-
-if(announcement){
-
-announcement.messages.push({
-
-sender:"System",
-
-text:
-`📅 New Event: ${title} on ${date}`,
-
-time:
-new Date()
-.toLocaleTimeString([],{
-hour:"2-digit",
-minute:"2-digit"
-})
-
-});
-
-announcement.unread++;
-
-}
-
-    FeedModule.posts.unshift({
+    /*FeedModule.posts.unshift({
 
   id: Date.now() + 1,
 
@@ -405,36 +505,12 @@ announcement.unread++;
   comments: []
 
 });
-
+*/
     this.render(
       document.getElementById("contentArea")
     );
 
   });
-
-    const setResponse = (
-  eventId,
-  response
-) => {
-
-  const event =
-    this.events.find(
-      e => e.id == eventId
-    );
-
-  if(!event) return;
-
-  event.responses[
-    window.currentUser.name
-  ] = response;
-
-  this.render(
-    document.getElementById(
-      "contentArea"
-    )
-  );
-
-};
 
     document
 .querySelectorAll(".going-btn")
@@ -442,7 +518,7 @@ announcement.unread++;
 
   btn.addEventListener("click", () => {
 
-    setResponse(
+    this.rsvp(
       btn.dataset.id,
       "going"
     );
@@ -457,7 +533,7 @@ announcement.unread++;
 
   btn.addEventListener("click", () => {
 
-    setResponse(
+    this.rsvp(
       btn.dataset.id,
       "maybe"
     );
@@ -472,69 +548,99 @@ announcement.unread++;
 
   btn.addEventListener("click", () => {
 
-    setResponse(
+    this.rsvp(
       btn.dataset.id,
-      "notGoing"
+      "not_going"
     );
 
   });
 
 });
 
-document
-.querySelectorAll(".delete-event-btn")
-.forEach(btn => {
+document.querySelectorAll(".delete-event-btn")
+.forEach(btn=>{
 
-  btn.addEventListener("click", () => {
+btn.onclick = async ()=>{
 
-    const id =
-      Number(btn.dataset.id);
+if(!confirm("Delete event?")) return;
 
-    this.events =
-      this.events.filter(
-        event => event.id !== id
-      );
+const form=new FormData();
 
-    this.render(
-      document.getElementById(
-        "contentArea"
-      )
-    );
+form.append("id",btn.dataset.id);
 
-  });
+const response=await fetch(
+"php/api/delete_event.php",
+{
+method:"POST",
+body:form,
+credentials:"include"
+}
+);
+
+const result=await response.json();
+
+if(result.success){
+
+this.render(
+document.getElementById("contentArea")
+);
+
+}
+
+};
 
 });
 
-document
-.querySelectorAll(".edit-event-btn")
-.forEach(btn => {
+document.querySelectorAll(".edit-event-btn")
+.forEach(btn=>{
 
-  btn.addEventListener("click", () => {
+btn.onclick = async ()=>{
 
-    const event =
-      this.events.find(
-        e => e.id == btn.dataset.id
-      );
+const event=this.events.find(
+e=>e.id==btn.dataset.id
+);
 
-    if(!event) return;
+const title=prompt("Title",event.title);
 
-    const title =
-      prompt(
-        "Edit title:",
-        event.title
-      );
+if(title===null) return;
 
-    if(!title) return;
+const description=prompt(
+"Description",
+event.description
+);
 
-    event.title = title;
+const location=prompt(
+"Location",
+event.location
+);
 
-    this.render(
-      document.getElementById(
-        "contentArea"
-      )
-    );
+const form=new FormData();
 
-  });
+form.append("id",event.id);
+form.append("title",title);
+form.append("description",description);
+form.append("location",location);
+
+const response=await fetch(
+"php/api/edit_event.php",
+{
+method:"POST",
+body:form,
+credentials:"include"
+}
+);
+
+const result=await response.json();
+
+if(result.success){
+
+this.render(
+document.getElementById("contentArea")
+);
+
+}
+
+};
 
 });
 
@@ -549,53 +655,94 @@ this.events.find(
 e => e.id == day.dataset.id
 );
 
-document
-.getElementById(
-"eventModalContent"
-)
-.innerHTML = `
+document.getElementById("eventModalContent").innerHTML = `
 
-<h2>
-${event.title}
-</h2>
+<div class="event-modal-header">
 
-<p>
-📅 ${event.date}
-</p>
+<img
+src="${
+event.image
+?
+event.image
+:
+"assets/images/download.jpeg"
+}"
+class="event-modal-image">
 
-<p>
-📍 ${event.location}
-</p>
+<div class="event-modal-overlay">
 
-<p>
+<h2>${event.title}</h2>
+
+<p>📅 ${event.event_date}</p>
+
+</div>
+
+</div>
+
+<div class="event-modal-body">
+
+<div class="event-info">
+
+<div>
+
+📍 <strong>📍
+<a
+href="https://www.google.com/maps/search/${encodeURIComponent(event.location)}"
+target="_blank"
+class="event-location-link"
+>
+${event.location}
+</a></strong>
+
+</div>
+
+<div>
+
+⏳ ${this.getCountdown(event.event_date)}
+
+</div>
+
+</div>
+
+<p class="event-description">
+
 ${event.description}
+
 </p>
 
 <hr>
 
-<p>
-✅ Going:
-${event.going}
-</p>
+<div class="event-stats">
 
-<p>
-🤔 Maybe:
-${event.maybe}
-</p>
+<div>
 
-<p>
-❌ Can't:
-${event.notGoing}
-</p>
+✅ ${event.going_count}
+
+</div>
+
+<div>
+
+🤔 ${event.maybe_count}
+
+</div>
+
+<div>
+
+❌ ${event.notgoing_count}
+
+</div>
+
+</div>
 
 <button
 id="closeEventModal"
-class="primary-btn"
->
+class="primary-btn">
 
 Close
 
 </button>
+
+</div>
 
 `;
 
@@ -628,108 +775,120 @@ document
 });
 
 });
+},
 
-document
-  .querySelectorAll(
-    ".view-service-btn"
-  )
-  .forEach(btn => {
+  async rsvp(eventId,status){
 
-    btn.addEventListener(
-      "click",
-      () => {
+const form = new FormData();
 
-        const service =
-          this.services.find(
+form.append("event_id",eventId);
 
-            s =>
-              s.id ===
-              Number(
-                btn.dataset.id
-              )
+form.append("status",status);
 
-          );
+const response = await fetch(
 
-        if(!service) return;
+"php/api/rsvp_event.php",
 
-        alert(
+{
 
-`SERVICE DETAILS
+method:"POST",
 
-Name: ${service.name}
+body:form,
 
-Category: ${service.category}
+credentials:"include"
 
-Phone: ${service.phone}
+}
 
-Location: ${service.location}
+);
 
-Description:
-${service.description}`
+const result = await response.json();
 
-        );
+if(result.success){
 
-      }
+await this.render(
 
-    );
+document.getElementById("contentArea")
 
-  });
+);
 
-document
-  .querySelectorAll(
-    ".filter-btn"
-  )
-  .forEach(btn => {
+}
 
-    btn.addEventListener(
-      "click",
-      () => {
+},
 
-        document
-          .querySelectorAll(
-            ".filter-btn"
-          )
-          .forEach(b =>
-            b.classList.remove(
-              "active-filter"
-            )
-          );
+countdown(date){
 
-        btn.classList.add(
-          "active-filter"
-        );
+const now = new Date();
 
-        const category =
-          btn.dataset.category;
+const event = new Date(date);
 
-        const filtered =
-          category === "All"
-          ? this.services
-          : this.services.filter(
+const diff = event - now;
 
-              service =>
-                service.category === category
+if(diff <= 0){
 
-            );
+return "Event has started";
 
-        document.getElementById(
-          "servicesContainer"
-        ).innerHTML =
+}
 
-          filtered.map(service =>
+const days = Math.floor(diff / 86400000);
 
-            this.serviceTemplate(service)
+const hours = Math.floor(
+(diff % 86400000) / 3600000
+);
 
-          ).join("");
+return `${days} days ${hours} hrs left`;
 
-        this.attachDeleteButtons();
+},
 
-      }
+getCountdown(date){
 
-    );
+const now=new Date();
 
-  });
+const event=new Date(date);
 
-  }
+const diff=event-now;
+
+if(diff<=0){
+
+return "Event Started";
+
+}
+
+const days=Math.floor(diff/(1000*60*60*24));
+
+const hours=Math.floor(
+
+(diff%(1000*60*60*24))/
+
+(1000*60*60)
+
+);
+
+return `${days} Days ${hours} Hours Left`;
+
+},
+
+renderAttendees(list){
+
+if(!list){
+
+return "<small>No attendees yet</small>";
+
+}
+
+const people = list.split("|");
+
+return people.slice(0,4).map(name=>`
+
+<div class="attendee-avatar"
+
+title="${name}">
+
+${name.charAt(0)}
+
+</div>
+
+`).join("");
+
+}
 
 };

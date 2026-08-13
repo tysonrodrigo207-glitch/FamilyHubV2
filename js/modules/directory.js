@@ -1,625 +1,1536 @@
 const DirectoryModule = {
 
-  services: [
-
-    {
-      id: 1,
-      name: "Community Health Centre",
-      category: "Health",
-      phone: "+256 700 000001",
-      location: "Kampala",
-      description:
-        "Health consultations, counselling and family wellness support.",
-        rating: 4.8
-    },
-
-    {
-      id: 2,
-      name: "Family Legal Aid",
-      category: "Legal Aid",
-      phone: "+256 700 000002",
-      location: "Kampala",
-      description:
-        "Legal support and guidance for families.",
-        rating: 4.5
-    },
-
-    {
-      id: 3,
-      name: "Hope Education Services",
-      category: "Education",
-      phone: "+256 700 000003",
-      location: "Mukono",
-      description:
-        "Educational support, mentorship and school guidance.",
-        rating: 4.7
-    }
-
-  ],
-
-  favourites: [],
-
-  render(container) {
-
-    const isAdmin =
-      window.currentUser &&
-      (
-        window.currentUser.role === "Admin" ||
-        window.currentUser.role === "Moderator"
-      );
-
-    container.innerHTML = `
-
-      <div class="directory-layout">
-
-        ${
-          isAdmin
-          ? `
-
-          <div class="card">
-
-            <h2>
-              Add Service
-            </h2>
-
-            <input
-              id="serviceName"
-              placeholder="Service Name"
-            >
-
-            <input
-              id="serviceCategory"
-              placeholder="Category"
-            >
-
-            <input
-              id="servicePhone"
-              placeholder="Phone Number"
-            >
+    currentTab: "members",
 
-            <input
-              id="serviceLocation"
-              placeholder="Location"
-            >
-
-            <textarea
-              id="serviceDescription"
-              placeholder="Description"
-            ></textarea>
+    members: [],
 
-            <button
-              id="addServiceBtn"
-              class="primary-btn"
-            >
+    services: [],
 
-              Add Service
+    favourites: [],
 
-            </button>
 
-          </div>
+    /* =====================================================
+       MAIN RENDER
+    ===================================================== */
 
-          `
-          : ""
-        }
+    async render(container) {
 
-        <div class="card">
+        const isAdmin =
+            window.currentUser &&
+            (
+                window.currentUser.role === "Admin" ||
+                window.currentUser.role === "Moderator"
+            );
 
-  <input
-    id="directorySearch"
-    placeholder="Search services..."
-  >
 
-  <div class="directory-filters">
+        container.innerHTML = `
 
-    <button
-      class="filter-btn active-filter"
-      data-category="All"
-    >
-      All
-    </button>
+            <div class="directory-layout">
 
-    <button
-      class="filter-btn"
-      data-category="Health"
-    >
-      Health
-    </button>
+                <!-- DIRECTORY TABS -->
+                <div class="directory-tabs">
 
-    <button
-      class="filter-btn"
-      data-category="Education"
-    >
-      Education
-    </button>
+                    <button
+                        id="membersTab"
+                        class="directory-tab ${
+                            this.currentTab === "members"
+                                ? "active"
+                                : ""
+                        }"
+                    >
+                        👥 Members
+                         
+                    </button>
 
-    <button
-      class="filter-btn"
-      data-category="Legal Aid"
-    >
-      Legal Aid
-    </button>
 
-  </div>
+                    <button
+                        id="servicesTab"
+                        class="directory-tab ${
+                            this.currentTab === "services"
+                                ? "active"
+                                : ""
+                        }"
+                    >
+                        🏢 Community Services
+                    </button>
 
-</div>
+                </div>
 
-        <div
-          id="servicesContainer"
-          class="services-grid"
-        >
 
-          ${this.services.map(service =>
+                <!-- DIRECTORY CONTENT -->
+                <div id="directoryContent"></div>
 
-            this.serviceTemplate(service)
 
-          ).join("")}
+                <!-- SERVICE DETAILS MODAL -->
+                <div
+                    id="serviceModal"
+                    class="modal hidden"
+                >
 
-        </div>
+                    <div class="modal-box">
 
-        <div class="card">
+                        <div id="serviceModalContent"></div>
 
-  <h2>
-    🏆 Top Rated Services
-  </h2>
+                        <button
+                            id="closeServiceModal"
+                            class="primary-btn"
+                        >
+                            Close
+                        </button>
 
-  ${[...this.services]
+                    </div>
 
-    .sort(
-      (a,b)=>
-      b.rating-a.rating
-    )
+                </div>
 
-    .slice(0,3)
 
-    .map(service => `
+                <!-- MEMBER PROFILE MODAL -->
+                <div
+                    id="memberModal"
+                    class="modal hidden"
+                >
 
-      <div class="service-card">
+                    <div class="modal-box">
 
-        <strong>
-          ${service.name}
-        </strong>
+                        <div id="memberModalContent"></div>
 
-        <p>
-          ⭐ ${service.rating}
-        </p>
+                        <button
+                            id="closeMemberModal"
+                            class="primary-btn"
+                        >
+                            Close
+                        </button>
 
-      </div>
+                    </div>
 
-    `)
+                </div>
 
-    .join("")}
-
-</div>
-
-        <div class="card">
-
-  <h2>
-    🚨 Emergency Contacts
-  </h2>
-
-  <div class="service-card">
-
-    <h3>Police</h3>
-
-    <p>999</p>
-
-  </div>
-
-  <div class="service-card">
-
-    <h3>Ambulance</h3>
-
-    <p>911</p>
-
-  </div>
-
-  <div class="service-card">
-
-    <h3>Family Support Hotline</h3>
-
-    <p>0800-123-456</p>
-
-  </div>
-
-</div>
-
-      </div>
-
-    <div
-  id="serviceModal"
-  class="modal hidden"
->
-
-  <div class="modal-box">
-
-    <div id="serviceModalContent"></div>
-
-    <button
-      id="closeServiceModal"
-      class="primary-btn"
-    >
-      Close
-    </button>
-
-  </div>
-
-</div>
-    
-      `;
-
-    this.attachEvents();
-  },
-
-  serviceTemplate(service) {
-
-    const isAdmin =
-      window.currentUser &&
-      (
-        window.currentUser.role === "Admin" ||
-        window.currentUser.role === "Moderator"
-      );
-
-    return `
-
-      <div
-        class="card service-card"
-      >
-
-        <h3>
-          ${service.name}
-        </h3>
-
-        <p class="desc">
-          ${service.category}
-        </p>
-
-        <p>
-          ⭐ ${service.rating}
-        </p>
-
-        <p>
-
-  📞
-
-  <a href="tel:${service.phone}">
-    ${service.phone}
-  </a>
-
-</p>
-
-        <p>
-
-  📍
-
-  <a
-    href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(service.location)}"
-    target="_blank"
-  >
-    ${service.location}
-  </a>
-
-</p>
-
-        <p>
-          ${service.description}
-        </p>
-
-        <button
-  class="primary-btn view-service-btn"
-  data-id="${service.id}"
->
-  View Details
-</button>
-
-<button
-  class="action-btn favourite-btn"
-  data-id="${service.id}"
->
-  ❤️ Favourite
-</button>
-
-
-        ${
-          isAdmin
-          ? `
-
-          <button
-            class="delete-service-btn"
-            data-id="${service.id}"
-          >
-
-            🗑 Delete
-
-          </button>
-
-          `
-          : ""
-        }
-
-      </div>
-
-    `;
-  },
-
-  attachEvents() {
-
-    document
-      .getElementById("directorySearch")
-      ?.addEventListener("input", e => {
-
-        const search =
-          e.target.value.toLowerCase();
-
-        const filtered =
-          this.services.filter(service =>
-
-            service.name
-            .toLowerCase()
-            .includes(search)
-
-            ||
-
-            service.category
-            .toLowerCase()
-            .includes(search)
-
-            ||
-
-            service.location
-            .toLowerCase()
-            .includes(search)
-
-          );
-
-        document.getElementById(
-          "servicesContainer"
-        ).innerHTML =
-
-          filtered.map(service =>
-
-            this.serviceTemplate(service)
-
-          ).join("");
-
-          document
-  .querySelectorAll(
-    ".view-service-btn"
-  )
-  .forEach(btn => {
-
-    btn.addEventListener(
-      "click",
-      () => {
-
-        const service =
-          this.services.find(
-            s =>
-              s.id ===
-              Number(btn.dataset.id)
-          );
-
-        if(!service) return;
-
-        document.getElementById(
-          "serviceModalContent"
-        ).innerHTML = `
-
-          <h2>
-            ${service.name}
-          </h2>
-
-          <p>
-            <strong>Category:</strong>
-            ${service.category}
-          </p>
-
-          <p>
-            <strong>Rating:</strong>
-            ⭐ ${service.rating}
-          </p>
-
-          <p>
-            <strong>Phone:</strong>
-            ${service.phone}
-          </p>
-
-          <p>
-            <strong>Location:</strong>
-            ${service.location}
-          </p>
-
-          <p>
-            ${service.description}
-          </p>
+            </div>
 
         `;
 
-        document
-          .getElementById(
-            "serviceModal"
-          )
-          .classList.remove(
-            "hidden"
-          );
 
-      }
-    );
+        this.attachEvents();
 
-  });
+        await this.renderContent();
 
-document
-  .getElementById(
-    "closeServiceModal"
-  )
-  ?.addEventListener(
-    "click",
-    () => {
+    },
 
-      document
-        .getElementById(
-          "serviceModal"
-        )
-        .classList.add(
-          "hidden"
-        );
 
-    }
-  );
+    /* =====================================================
+       RENDER CONTENT
+    ===================================================== */
 
-        this.attachDeleteButtons();
+    async renderContent() {
 
-      });
+        const container =
+            document.getElementById("directoryContent");
 
-    document
-      .getElementById("addServiceBtn")
-      ?.addEventListener("click", () => {
+        if (!container) return;
 
-        const name =
-          document.getElementById(
-            "serviceName"
-          ).value.trim();
 
-        const category =
-          document.getElementById(
-            "serviceCategory"
-          ).value.trim();
+        if (this.currentTab === "members") {
 
-        const phone =
-          document.getElementById(
-            "servicePhone"
-          ).value.trim();
+            await this.renderMembers(container);
 
-        const location =
-          document.getElementById(
-            "serviceLocation"
-          ).value.trim();
+        } else {
 
-        const description =
-          document.getElementById(
-            "serviceDescription"
-          ).value.trim();
+            await this.renderServices(container);
 
-        if(
-          !name ||
-          !category ||
-          !phone ||
-          !location
-        ){
-          return;
         }
 
-        this.services.unshift({
 
-          id: Date.now(),
+        /*
+        Keep active tab correct
+        */
 
-          name,
+        document
+            .querySelectorAll(".directory-tab")
+            .forEach(tab => {
 
-          category,
+                tab.classList.remove("active");
 
-          phone,
+            });
 
-          location,
 
-          description
+        if (this.currentTab === "members") {
+
+            document
+                .getElementById("membersTab")
+                ?.classList.add("active");
+
+        } else {
+
+            document
+                .getElementById("servicesTab")
+                ?.classList.add("active");
+
+        }
+
+    },
+
+
+    /* =====================================================
+       LOAD MEMBERS
+    ===================================================== */
+
+    async loadMembers() {
+
+        try {
+
+            const response = await fetch(
+                "php/api/directory_members.php",
+                {
+                    credentials: "include"
+                }
+            );
+
+
+            const result = await response.json();
+
+
+            if (result.success) {
+
+                this.members = result.data;
+
+            } else {
+
+                this.members = [];
+
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Failed to load members:",
+                error
+            );
+
+            this.members = [];
+
+        }
+
+    },
+
+
+    /* =====================================================
+       LOAD SERVICES
+    ===================================================== */
+
+    async loadServices() {
+
+        try {
+
+            const response = await fetch(
+                "php/api/services.php",
+                {
+                    credentials: "include"
+                }
+            );
+
+
+            const result = await response.json();
+
+
+            if (result.success) {
+
+                this.services = result.data;
+
+            } else {
+
+                this.services = [];
+
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Failed to load services:",
+                error
+            );
+
+            this.services = [];
+
+        }
+
+    },
+
+    async loadFavourites() {
+
+    try {
+
+        const response = await fetch(
+            "php/api/get_favourites.php",
+            {
+                credentials: "include"
+            }
+        );
+
+
+        const result =
+            await response.json();
+
+
+        if (result.success) {
+
+            this.favourites = result.data;
+
+        } else {
+
+            this.favourites = [];
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Failed to load favourites:",
+            error
+        );
+
+        this.favourites = [];
+
+    }
+
+},
+
+
+    /* =====================================================
+       MEMBER TEMPLATE
+    ===================================================== */
+
+    memberTemplate(member) {
+
+        return `
+
+            <div class="member-card">
+
+                <img
+                    class="member-avatar"
+                    src="${
+                        member.profile_picture &&
+                        member.profile_picture !== ""
+                            ? member.profile_picture
+                            : "assets/images/default-avatar.jpg"
+                    }"
+                    onerror="
+                        this.onerror=null;
+                        this.src='assets/images/default-avatar.jpg';
+                    "
+                >
+
+
+                <div class="member-info">
+
+                    <h3>
+                        ${member.full_name || "Unknown Member"}
+                    </h3>
+
+
+                    <span class="member-role">
+                        ${member.role || "Member"}
+                    </span>
+
+
+                    <p class="member-bio">
+                        ${
+                            member.bio ||
+                            "Family Hub Member"
+                        }
+                    </p>
+
+
+                    <p class="member-email">
+                        📧 ${member.email || "Email unavailable"}
+                    </p>
+
+
+                    <button
+                        class="primary-btn view-profile-btn"
+                        data-id="${member.id}"
+                    >
+                        View Profile
+                    </button>
+
+                </div>
+
+            </div>
+
+        `;
+
+    },
+
+
+    /* =====================================================
+       RENDER MEMBERS
+    ===================================================== */
+
+    async renderMembers(container) {
+
+    await this.loadMembers();
+
+    container.innerHTML = `
+
+        <div class="card">
+
+            <input
+                id="memberSearch"
+                placeholder="Search members..."
+            >
+
+        </div>
+
+
+        <div
+            id="membersContainer"
+            class="services-grid"
+        >
+
+            ${this.members.map(member => `
+
+                <div class="member-card">
+
+                    <img
+                        class="member-avatar"
+                        src="${
+                            member.profile_picture &&
+                            member.profile_picture !== ""
+                                ? member.profile_picture
+                                : "assets/images/default-avatar.jpg"
+                        }"
+                        onerror="
+                            this.onerror=null;
+                            this.src='assets/images/default-avatar.jpg';
+                        "
+                    >
+
+
+                    <div class="member-info">
+
+                        <h3>
+                            ${member.full_name}
+                        </h3>
+
+
+                        <span class="member-role">
+                            ${member.role || "Member"}
+                        </span>
+
+
+                        <p class="member-bio">
+                            ${member.bio || "Family Hub Member"}
+                        </p>
+
+
+                        <p class="member-email">
+                            📧 ${member.email || "Email not provided"}
+                        </p>
+
+
+                        <button
+                            class="primary-btn view-profile-btn"
+                            data-id="${member.id}"
+                        >
+                            View Profile
+                        </button>
+
+                    </div>
+
+                </div>
+
+            `).join("")}
+
+        </div>
+
+    `;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | MEMBER SEARCH
+    |--------------------------------------------------------------------------
+    */
+
+    document
+        .getElementById("memberSearch")
+        ?.addEventListener("input", (e) => {
+
+            const search =
+                e.target.value.toLowerCase();
+
+
+            document
+                .querySelectorAll(".member-card")
+                .forEach(card => {
+
+                    const text =
+                        card.innerText.toLowerCase();
+
+
+                    card.style.display =
+                        text.includes(search)
+                            ? ""
+                            : "none";
+
+                });
 
         });
 
-        NotificationModule.add(
-          `📍 New Service Added: ${name}`
-        );
 
-        this.render(
-          document.getElementById(
-            "contentArea"
-          )
-        );
-
-      });
-
-    this.attachDeleteButtons();
-
-  },
-
-  attachDeleteButtons() {
+    /*
+    |--------------------------------------------------------------------------
+    | VIEW MEMBER PROFILE
+    |--------------------------------------------------------------------------
+    */
 
     document
-      .querySelectorAll(
-        ".delete-service-btn"
-      )
-      .forEach(btn => {
+        .querySelectorAll(".view-profile-btn")
+        .forEach(btn => {
 
-        btn.addEventListener(
-          "click",
-          () => {
+            btn.addEventListener("click", () => {
 
-            const id =
-              Number(
-                btn.dataset.id
-              );
+                const member =
+                    this.members.find(
+                        m =>
+                            Number(m.id) ===
+                            Number(btn.dataset.id)
+                    );
 
-            this.services =
-              this.services.filter(
 
-                service =>
-                  service.id !== id
+                if (!member) return;
 
-              );
 
-            this.render(
-              document.getElementById(
-                "contentArea"
-              )
+                document
+                    .getElementById("serviceModalContent")
+                    .innerHTML = `
+
+                        <div class="profile-modal">
+
+                            <div class="profile-modal-header">
+
+                                <img
+                                    class="member-avatar profile-modal-avatar"
+                                    src="${
+                                        member.profile_picture &&
+                                        member.profile_picture !== ""
+                                            ? member.profile_picture
+                                            : "assets/images/default-avatar.jpg"
+                                    }"
+                                    onerror="
+                                        this.onerror=null;
+                                        this.src='assets/images/default-avatar.jpg';
+                                    "
+                                >
+
+
+                                <div>
+
+                                    <h2>
+                                        ${member.full_name}
+                                    </h2>
+
+                                    <span class="member-role">
+                                        ${member.role || "Member"}
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="profile-modal-details">
+
+                                <p>
+                                    <strong>📧 Email</strong><br>
+                                    ${
+                                        member.email
+                                            ? `
+                                                <a href="mailto:${member.email}">
+                                                    ${member.email}
+                                                </a>
+                                              `
+                                            : "Not provided"
+                                    }
+                                </p>
+
+
+                                <p>
+                                    <strong>🎓 Course</strong><br>
+                                    ${member.course || "Not provided"}
+                                </p>
+
+
+                                <p>
+                                    <strong>📚 Year of Study</strong><br>
+                                    ${member.year_of_study || "Not provided"}
+                                </p>
+
+
+                                <p>
+                                    <strong>🛠 Skills</strong><br>
+                                    ${member.skills || "Not provided"}
+                                </p>
+
+
+                                <p>
+                                    <strong>👤 About</strong><br>
+                                    ${
+                                        member.bio ||
+                                        "This member has not added a bio yet."
+                                    }
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+
+                document
+                    .getElementById("serviceModal")
+                    .classList.remove("hidden");
+
+            });
+
+        });
+
+},
+
+
+    /* =====================================================
+       SERVICE TEMPLATE
+    ===================================================== */
+
+    serviceTemplate(service) {
+
+        const isAdmin =
+            window.currentUser &&
+            (
+                window.currentUser.role === "Admin" ||
+                window.currentUser.role === "Moderator"
             );
 
-          }
-        );
 
-      });
+        return `
 
-      document
-  .querySelectorAll(".favourite-btn")
-  .forEach(btn => {
+            <div class="card service-card">
 
-    btn.addEventListener(
-      "click",
-      () => {
+                <h3>
+                    ${service.name}
+                </h3>
 
-        const id =
-          Number(btn.dataset.id);
 
-        const service =
-          this.services.find(
-            s => s.id === id
-          );
+                <p class="desc">
+                    ${service.category || "Community Service"}
+                </p>
 
-        if(!service) return;
 
-        const exists =
-          this.favourites.find(
-            s => s.id === id
-          );
+                <p class="desc">
+                    Added by ${
+                        service.full_name ||
+                        "Family Hub"
+                    }
+                </p>
 
-        if(exists){
 
-          alert(
-            "Already in favourites ❤️"
-          );
+                <p>
+                    ⭐ ${service.rating || "0.0"}
+                </p>
 
-          return;
-        }
 
-        this.favourites.push(service);
+                ${
+                    service.phone
+                        ? `
+                            <p>
+                                📞
+                                <a href="tel:${service.phone}">
+                                    ${service.phone}
+                                </a>
+                            </p>
+                        `
+                        : ""
+                }
 
-        alert(
-          `${service.name} added to favourites ❤️`
-        );
 
-      }
-    );
+                ${
+                    service.location
+                        ? `
+                            <p>
+                                📍
 
-  });
+                                <a
+                                    href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(service.location)}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    ${service.location}
+                                </a>
 
-  }
+                            </p>
+                        `
+                        : ""
+                }
 
+
+                <p>
+                    ${
+                        service.description ||
+                        "No description provided."
+                    }
+                </p>
+
+
+                <div class="service-actions">
+
+                    <button
+                        class="primary-btn view-service-btn"
+                        data-id="${service.id}"
+                    >
+                        View Details
+                    </button>
+
+
+                    <button
+                      class="action-btn favourite-btn ${
+                          this.favourites.some(
+                              favourite =>
+                                  Number(favourite.id) === Number(service.id)
+                          )
+                              ? "saved-favourite"
+                              : ""
+                      }"
+                      data-id="${service.id}"
+                    >
+                      ${
+                          this.favourites.some(
+                              favourite =>
+                                  Number(favourite.id) === Number(service.id)
+                          )
+                              ? "❤️ Saved"
+                              : "❤️ Favourite"
+                      }
+                    </button>
+
+
+                    ${
+                        isAdmin
+                            ? `
+                                <button
+                                    class="delete-service-btn"
+                                    data-id="${service.id}"
+                                >
+                                    🗑 Delete
+                                </button>
+                            `
+                            : ""
+                    }
+
+                </div>
+
+            </div>
+
+        `;
+
+    },
+
+
+    /* =====================================================
+       RENDER SERVICES
+    ===================================================== */
+
+    async renderServices(container){
+
+    await this.loadServices();
+
+    await this.loadFavourites();
+
+
+        const isAdmin =
+            window.currentUser &&
+            (
+                window.currentUser.role === "Admin" ||
+                window.currentUser.role === "Moderator"
+            );
+
+
+        container.innerHTML = `
+
+
+            ${
+                isAdmin
+                    ? `
+
+                        <div class="card">
+
+                            <h2>
+                                Add Community Service
+                            </h2>
+
+
+                            <input
+                                id="serviceName"
+                                placeholder="Service name"
+                            >
+
+
+                            <input
+                                id="serviceCategory"
+                                placeholder="Category"
+                            >
+
+
+                            <input
+                                id="servicePhone"
+                                placeholder="Phone"
+                            >
+
+
+                            <input
+                                id="serviceEmail"
+                                placeholder="Email"
+                            >
+
+
+                            <input
+                                id="serviceWebsite"
+                                placeholder="Website"
+                            >
+
+
+                            <input
+                                id="serviceLocation"
+                                placeholder="Location"
+                            >
+
+
+                            <textarea
+                                id="serviceDescription"
+                                placeholder="Description"
+                            ></textarea>
+
+
+                            <button
+                                id="saveServiceBtn"
+                                class="primary-btn"
+                            >
+                                Create Service
+                            </button>
+
+                        </div>
+
+                    `
+                    : ""
+            }
+
+
+            <div class="card">
+
+                <input
+                    id="directorySearch"
+                    placeholder="Search services..."
+                >
+
+            </div>
+
+
+            <div
+                id="servicesContainer"
+                class="services-grid"
+            >
+
+                ${
+                    this.services.length
+                        ? this.services
+                            .map(service =>
+                                this.serviceTemplate(service)
+                            )
+                            .join("")
+                        : `
+                            <div class="card">
+                                <p>
+                                    No community services available.
+                                </p>
+                            </div>
+                        `
+                }
+
+            </div>
+
+        `;
+
+
+        /*
+        CREATE SERVICE
+        */
+
+        document
+            .getElementById("saveServiceBtn")
+            ?.addEventListener(
+                "click",
+                async () => {
+
+                    const form =
+                        new FormData();
+
+
+                    form.append(
+                        "name",
+                        document
+                            .getElementById(
+                                "serviceName"
+                            )
+                            .value
+                    );
+
+
+                    form.append(
+                        "category",
+                        document
+                            .getElementById(
+                                "serviceCategory"
+                            )
+                            .value
+                    );
+
+
+                    form.append(
+                        "phone",
+                        document
+                            .getElementById(
+                                "servicePhone"
+                            )
+                            .value
+                    );
+
+
+                    form.append(
+                        "email",
+                        document
+                            .getElementById(
+                                "serviceEmail"
+                            )
+                            .value
+                    );
+
+
+                    form.append(
+                        "website",
+                        document
+                            .getElementById(
+                                "serviceWebsite"
+                            )
+                            .value
+                    );
+
+
+                    form.append(
+                        "location",
+                        document
+                            .getElementById(
+                                "serviceLocation"
+                            )
+                            .value
+                    );
+
+
+                    form.append(
+                        "description",
+                        document
+                            .getElementById(
+                                "serviceDescription"
+                            )
+                            .value
+                    );
+
+
+                    try {
+
+                        const response =
+                            await fetch(
+                                "php/api/create_service.php",
+                                {
+                                    method: "POST",
+                                    body: form,
+                                    credentials: "include"
+                                }
+                            );
+
+
+                        const result =
+                            await response.json();
+
+
+                        if (result.success) {
+
+                            await this.renderServices(
+                                container
+                            );
+
+                        } else {
+
+                            alert(
+                                result.message ||
+                                "Unable to create service."
+                            );
+
+                        }
+
+                    } catch (error) {
+
+                        console.error(
+                            "Create service error:",
+                            error
+                        );
+
+                        alert(
+                            "Something went wrong while creating the service."
+                        );
+
+                    }
+
+                }
+            );
+
+
+        /*
+        SEARCH SERVICES
+        */
+
+        document
+            .getElementById("directorySearch")
+            ?.addEventListener(
+                "input",
+                e => {
+
+                    const search =
+                        e.target.value
+                            .toLowerCase()
+                            .trim();
+
+
+                    const filtered =
+                        this.services.filter(
+                            service =>
+
+                                (
+                                    service.name ||
+                                    ""
+                                )
+                                    .toLowerCase()
+                                    .includes(search)
+
+                                ||
+
+                                (
+                                    service.category ||
+                                    ""
+                                )
+                                    .toLowerCase()
+                                    .includes(search)
+
+                                ||
+
+                                (
+                                    service.location ||
+                                    ""
+                                )
+                                    .toLowerCase()
+                                    .includes(search)
+
+                        );
+
+
+                    document
+                        .getElementById(
+                            "servicesContainer"
+                        )
+                        .innerHTML =
+
+                        filtered
+                            .map(service =>
+                                this.serviceTemplate(service)
+                            )
+                            .join("");
+
+
+                    this.attachServiceButtons();
+
+                }
+            );
+
+
+        this.attachServiceButtons();
+
+    },
+
+
+    /* =====================================================
+       DIRECTORY TABS
+    ===================================================== */
+
+    attachEvents() {
+
+
+        /*
+        MEMBERS TAB
+        */
+
+        document
+            .getElementById("membersTab")
+            ?.addEventListener(
+                "click",
+                async () => {
+
+                    this.currentTab =
+                        "members";
+
+                    await this.renderContent();
+
+                }
+            );
+
+
+        /*
+        SERVICES TAB
+        */
+
+        document
+            .getElementById("servicesTab")
+            ?.addEventListener(
+                "click",
+                async () => {
+
+                    this.currentTab =
+                        "services";
+
+                    await this.renderContent();
+
+                }
+            );
+
+
+        /*
+        SERVICE MODAL CLOSE
+        */
+
+        document
+            .getElementById("closeServiceModal")
+            ?.addEventListener(
+                "click",
+                () => {
+
+                    document
+                        .getElementById(
+                            "serviceModal"
+                        )
+                        .classList.add(
+                            "hidden"
+                        );
+
+                }
+            );
+
+
+        /*
+        MEMBER MODAL CLOSE
+        */
+
+        document
+            .getElementById("closeMemberModal")
+            ?.addEventListener(
+                "click",
+                () => {
+
+                    document
+                        .getElementById(
+                            "memberModal"
+                        )
+                        .classList.add(
+                            "hidden"
+                        );
+
+                }
+            );
+
+
+        /*
+        CLOSE SERVICE MODAL
+        WHEN CLICKING BACKDROP
+        */
+
+        document
+            .getElementById("serviceModal")
+            ?.addEventListener(
+                "click",
+                e => {
+
+                    if (
+                        e.target.id ===
+                        "serviceModal"
+                    ) {
+
+                        e.currentTarget
+                            .classList
+                            .add("hidden");
+
+                    }
+
+                }
+            );
+
+
+        /*
+        CLOSE MEMBER MODAL
+        WHEN CLICKING BACKDROP
+        */
+
+        document
+            .getElementById("memberModal")
+            ?.addEventListener(
+                "click",
+                e => {
+
+                    if (
+                        e.target.id ===
+                        "memberModal"
+                    ) {
+
+                        e.currentTarget
+                            .classList
+                            .add("hidden");
+
+                    }
+
+                }
+            );
+
+    },
+
+
+    /* =====================================================
+       SERVICE BUTTONS
+    ===================================================== */
+
+    attachServiceButtons() {
+
+
+        /*
+        VIEW DETAILS
+        */
+
+        document
+            .querySelectorAll(".view-service-btn")
+            .forEach(btn => {
+
+                btn.onclick = () => {
+
+                    const service =
+                        this.services.find(
+                            s =>
+                                Number(s.id) ===
+                                Number(btn.dataset.id)
+                        );
+
+
+                    if (!service) return;
+
+
+                    document
+                        .getElementById(
+                            "serviceModalContent"
+                        )
+                        .innerHTML = `
+
+                            <h2>
+                                ${service.name}
+                            </h2>
+
+
+                            <p>
+                                <strong>Category:</strong><br>
+                                ${
+                                    service.category ||
+                                    "Not provided"
+                                }
+                            </p>
+
+
+                            <p>
+                                <strong>Phone:</strong><br>
+
+                                ${
+                                    service.phone
+                                        ? `
+                                            <a href="tel:${service.phone}">
+                                                ${service.phone}
+                                            </a>
+                                        `
+                                        : "Not provided"
+                                }
+
+                            </p>
+
+
+                            <p>
+                                <strong>Email:</strong><br>
+
+                                ${
+                                    service.email
+                                        ? `
+                                            <a href="mailto:${service.email}">
+                                                ${service.email}
+                                            </a>
+                                        `
+                                        : "Not provided"
+                                }
+
+                            </p>
+
+
+                            <p>
+                                <strong>Website:</strong><br>
+
+                                ${
+                                    service.website
+                                        ? `
+                                            <a
+                                                href="${service.website}"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                Visit Website
+                                            </a>
+                                        `
+                                        : "Not provided"
+                                }
+
+                            </p>
+
+
+                            <p>
+                                <strong>Location:</strong><br>
+                                ${
+                                    service.location ||
+                                    "Not provided"
+                                }
+                            </p>
+
+
+                            <p>
+                                <strong>Rating:</strong><br>
+                                ⭐ ${
+                                    service.rating ||
+                                    "0.0"
+                                }
+                            </p>
+
+
+                            <p>
+                                <strong>Description:</strong><br>
+                                ${
+                                    service.description ||
+                                    "No description provided."
+                                }
+                            </p>
+
+                        `;
+
+
+                    document
+                        .getElementById(
+                            "serviceModal"
+                        )
+                        .classList.remove(
+                            "hidden"
+                        );
+
+                };
+
+            });
+
+
+        /*
+        FAVOURITE
+        */
+
+        // Favourite
+document
+    .querySelectorAll(".favourite-btn")
+    .forEach(btn => {
+
+        btn.onclick = async () => {
+
+            const serviceId =
+                Number(btn.dataset.id);
+
+
+            const form = new FormData();
+
+            form.append(
+                "service_id",
+                serviceId
+            );
+
+
+            try {
+
+                const response = await fetch(
+                    "php/api/toggle_favourite.php",
+                    {
+                        method: "POST",
+                        body: form,
+                        credentials: "include"
+                    }
+                );
+
+
+                const result =
+                    await response.json();
+
+
+                if (!result.success) {
+
+                    alert(
+                        result.message ||
+                        "Unable to update favourite."
+                    );
+
+                    return;
+
+                }
+
+
+                if (result.favourited) {
+
+                    btn.innerHTML = "❤️ Saved";
+
+                    btn.classList.add(
+                        "saved-favourite"
+                    );
+
+                } else {
+
+                    btn.innerHTML = "❤️ Favourite";
+
+                    btn.classList.remove(
+                        "saved-favourite"
+                    );
+
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Favourite error:",
+                    error
+                );
+
+                alert(
+                    "Something went wrong while updating your favourite."
+                );
+
+            }
+
+        };
+
+    });
+
+
+        /*
+        DELETE
+        */
+
+        this.attachDeleteButtons();
+
+    },
+
+
+    /* =====================================================
+       DELETE SERVICES
+    ===================================================== */
+
+    attachDeleteButtons() {
+
+        document
+            .querySelectorAll(
+                ".delete-service-btn"
+            )
+            .forEach(btn => {
+
+                btn.onclick =
+                    async () => {
+
+                        if (
+                            !confirm(
+                                "Delete this service?"
+                            )
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        const form =
+                            new FormData();
+
+
+                        form.append(
+                            "id",
+                            btn.dataset.id
+                        );
+
+
+                        try {
+
+                            const response =
+                                await fetch(
+                                    "php/api/delete_service.php",
+                                    {
+                                        method: "POST",
+                                        body: form,
+                                        credentials: "include"
+                                    }
+                                );
+
+
+                            const result =
+                                await response.json();
+
+
+                            if (
+                                result.success
+                            ) {
+
+                                await this.renderContent();
+
+                            } else {
+
+                                alert(
+                                    result.message ||
+                                    "Unable to delete service."
+                                );
+
+                            }
+
+                        } catch (error) {
+
+                            console.error(
+                                "Delete service error:",
+                                error
+                            );
+
+                            alert(
+                                "Something went wrong while deleting the service."
+                            );
+
+                        }
+
+                    };
+
+            });
+
+    }
 
 };
+

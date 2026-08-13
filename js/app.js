@@ -8,115 +8,243 @@ const modules = {
 };
 
 function renderPage(page) {
+
   State.currentPage = page;
 
-  document.getElementById("pageTitle")
-    .textContent =
-      page.charAt(0).toUpperCase() +
-      page.slice(1);
+  document.getElementById("pageTitle").textContent =
+    page.charAt(0).toUpperCase() +
+    page.slice(1);
 
   document
     .querySelectorAll(".nav-btn")
     .forEach(btn => {
+
       btn.classList.remove("active");
 
-      if (btn.dataset.page === page) {
+      if(btn.dataset.page === page){
+
         btn.classList.add("active");
+
       }
+
     });
 
   modules[page].render(
-    document.getElementById("contentArea")
+
+    document.getElementById(
+      "contentArea"
+    )
+
   );
+
 }
 
 document.addEventListener(
+
   "DOMContentLoaded",
+
   () => {
 
+    /*
+    -----------------------
+    RESTORE LOGIN
+    -----------------------
+    */
+
     const savedUser =
-        getCurrentUser();
+      getCurrentUser();
 
-      if(savedUser){
+    if(savedUser){
 
-        window.currentUser =
-          savedUser;
+      window.currentUser =
+        savedUser;
 
-        document.getElementById(
-          "loginBtn"
-        ).textContent =
+      document
+        .getElementById("loginBtn")
+        .textContent =
           `${savedUser.name} (${savedUser.role})`;
 
-      }
+    }
 
     renderPage("dashboard");
 
+    setInterval(()=>{
+
+    fetch(
+        "php/api/update_activity.php",
+        {
+            credentials:"include"
+        }
+    );
+
+},30000);
+
+    /*
+    -----------------------
+    SIDEBAR
+    -----------------------
+    */
+
     document
       .querySelectorAll(".nav-btn")
-      .forEach(btn => {
+      .forEach(btn=>{
 
-        btn.addEventListener("click", () => {
-          renderPage(btn.dataset.page);
-        });
+        btn.addEventListener(
+
+          "click",
+
+          ()=>{
+
+            renderPage(
+              btn.dataset.page
+            );
+
+          }
+
+        );
 
       });
+
+    /*
+    -----------------------
+    THEME
+    -----------------------
+    */
 
     document
       .getElementById("themeToggle")
-      .addEventListener("click", () => {
+      .addEventListener(
 
-        const body = document.body;
+        "click",
 
-        const newTheme =
-          body.dataset.theme === "light"
+        ()=>{
+
+          const body =
+            document.body;
+
+          body.dataset.theme =
+
+            body.dataset.theme === "light"
+
             ? "dark"
+
             : "light";
 
-        body.dataset.theme = newTheme;
-      });
+        }
+
+      );
+
+    /*
+    -----------------------
+    LOGIN BUTTON
+    -----------------------
+    */
 
     document
       .getElementById("loginBtn")
-      .addEventListener("click", () => {
+      .addEventListener(
 
-        document
-          .getElementById("loginModal")
-          .classList.remove("hidden");
+        "click",
 
-      });
+        async ()=>{
+
+          /*
+          If already logged in
+          */
+
+          if(window.currentUser){
+
+            await logout();
+
+            location.reload();
+
+            return;
+
+          }
+
+          document
+            .getElementById(
+              "loginModal"
+            )
+            .classList.remove(
+              "hidden"
+            );
+
+        }
+
+      );
+
+    /*
+    -----------------------
+    SUBMIT LOGIN
+    -----------------------
+    */
 
     document
       .getElementById("submitLogin")
-      .addEventListener("click", () => {
+      .addEventListener(
 
-        const username =
-          document.getElementById("username").value;
+        "click",
 
-        const password =
-          document.getElementById("password").value;
+        async ()=>{
 
-        const success =
-          login(username, password);
+          const username =
 
-        if (!success) {
-          alert("Invalid login");
-          return;
+            document
+              .getElementById(
+                "username"
+              )
+              .value
+              .trim();
+
+          const password =
+
+            document
+              .getElementById(
+                "password"
+              )
+              .value
+              .trim();
+
+          const success =
+
+            await login(
+
+              username,
+
+              password
+
+            );
+
+          if(!success){
+
+            return;
+
+          }
+
+          document
+            .getElementById(
+              "loginModal"
+            )
+            .classList.add(
+              "hidden"
+            );
+
+          document
+            .getElementById(
+              "loginBtn"
+            )
+            .textContent =
+
+            `${window.currentUser.name} (${window.currentUser.role})`;
+
+          renderPage("dashboard");
+
         }
 
-        document
-          .getElementById("loginModal")
-          .classList.add("hidden");
+      );
 
-        document.getElementById(
-          "loginBtn"
-        ).textContent = username;
-
-      });
-
-      document.getElementById(
-          "loginBtn"
-        ).textContent =
-          `${window.currentUser.name} (${window.currentUser.role})`;
-
+      NotificationModule.init();
   }
+
 );

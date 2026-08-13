@@ -57,7 +57,6 @@
 
     <!-- TOPBAR -->
     <header class="topbar">
-
       <div>
         <h1 id="pageTitle">Dashboard</h1>
       </div>
@@ -74,6 +73,64 @@
 
       </div>
 
+      <div class="notification-wrapper">
+
+  <button
+    id="notificationBtn"
+    class="notification-btn"
+    title="Notifications"
+    aria-label="Notifications"
+  >
+
+    🔔
+
+    <span
+      id="notificationBadge"
+      class="notification-badge hidden"
+    >
+      0
+    </span>
+
+  </button>
+
+
+  <div
+    id="notificationPanel"
+    class="notification-panel hidden"
+  >
+
+    <div class="notification-panel-header">
+
+      <div>
+
+        <h3>
+          Notifications
+        </h3>
+
+        <span>
+          Stay up to date with Family Hub
+        </span>
+
+      </div>
+
+      <button
+        id="markAllNotificationsBtn"
+        class="mark-all-btn"
+      >
+        Mark all read
+      </button>
+
+    </div>
+
+
+    <div
+      id="notificationList"
+      class="notification-list"
+    ></div>
+
+  </div>
+
+</div>
     </header>
 
     <!-- PAGE CONTENT -->

@@ -28,6 +28,64 @@ const FeedModule = {
 
   selectedMedia: null,
 
+  async loadPosts() {
+
+  const response = await fetch(
+
+    "php/api/feed.php",
+
+    {
+
+      credentials: "include"
+
+    }
+
+  );
+
+  const result = await response.json();
+
+  if (!result.success) {
+
+    alert(result.message);
+
+    return;
+
+  }
+
+  this.posts = result.data.map(post => ({
+
+id: Number(post.id),
+
+author: post.author,
+
+role: post.role,
+
+time: post.created_at,
+
+content: post.content,
+
+media: post.media,
+
+mediaType: post.media_type,
+
+fileName: post.file_name,
+
+likes: parseInt(post.likes),
+
+likedByUser:false,
+
+comments: post.comments || [],
+
+}));
+
+  this.render(
+
+    document.getElementById("contentArea")
+
+  );
+
+},
+
   render(container) {
 
     container.innerHTML = `
@@ -159,6 +217,14 @@ const FeedModule = {
     `;
 
     this.attachEvents();
+
+if (!this.loaded) {
+
+  this.loaded = true;
+
+  this.loadPosts();
+
+}
   },
 
   postTemplate(post) {
@@ -234,31 +300,29 @@ const FeedModule = {
                     ? `<img src="${post.media}">`
 
                     : post.mediaType === "video"
-                    ? `
-                      <video
-                        controls
-                        playsinline
-                        preload="metadata"
-                      >
+                      ? `
+                          <video
+                              controls
+                              preload="metadata"
+                              controlsList="nodownload"
+                              style="width:100%;border-radius:12px;"
+                          >
+                              <source
+                                  src="${post.media}"
+                                  type="video/${post.media.split('.').pop().toLowerCase()}"
+                              >
+                          </video>
 
-                        <source
-                          src="${post.media}"
-                          type="video/mp4"
-                        >
-
-                      </video>
-                    `
+                                          `
 
                     : `
                       <a
                         class="resource-box"
                         href="${post.media}"
-                        download="${post.fileName || 'resource'}"
+                        download="${post.file_name || 'resource'}"
                       >
 
-                        📎
-                        ${post.fileName || 'Download Resource'}
-
+                        ${post.file_name || "Download Resource"}
                       </a>
                     `
                 }
@@ -277,7 +341,7 @@ const FeedModule = {
           </span>
 
           <span>
-            💬 ${post.comments.length} comments
+            💬 ${post.comments_count || 0} comments
           </span>
 
         </div>
@@ -365,54 +429,80 @@ const FeedModule = {
     /* PUBLISH */
 
     document
-      .getElementById("publishPost")
-      ?.addEventListener("click", () => {
+  .getElementById("publishPost")
+  ?.addEventListener("click", async () => {
 
-        const input =
-          document.getElementById("postInput");
+    const text =
+      document.getElementById("postInput")
+      .value
+      .trim();
 
-        const text = input.value.trim();
+    if (!text && !this.selectedMedia) {
+      return;
+    }
 
-        if (!text && !this.selectedMedia) return;
+    const formData = new FormData();
 
-        this.posts.unshift({
+    formData.append(
+      "content",
+      text
+    );
 
-          id: Date.now(),
+    if (
+      this.selectedMedia &&
+      this.selectedMedia.file
+    ) {
 
-          author: window.currentUser.name,
+      formData.append(
+        "media",
+        this.selectedMedia.file
+      );
 
-          authorRole: window.currentUser.role,
+    }
 
-          role: window.currentUser.role,
+    const response =
+      await fetch(
 
-          time: "Just now",
+        "php/api/create_post.php",
 
-          content: text,
+        {
 
-          media:
-            this.selectedMedia?.url || "",
+          method: "POST",
 
-          mediaType:
-            this.selectedMedia?.type || "",
+          body: formData,
 
-          fileName:
-            this.selectedMedia?.fileName || "",
+          credentials: "include"
 
-          likes: 0,
+        }
 
-          likedByUser: false,
+      );
 
-          comments: []
+    const result =
+      await response.json();
 
-        });
+    if (!result.success) {
 
-        this.selectedMedia = null;
+      alert(result.message);
 
-        this.render(
-          document.getElementById("contentArea")
-        );
+      return;
 
-      });
+    }
+
+    await this.loadPosts();
+
+    this.selectedMedia = null;
+
+document.getElementById("postInput").value = "";
+
+document.getElementById("mediaPreview").innerHTML = "";
+
+document.getElementById("imageUpload").value = "";
+
+document.getElementById("videoUpload").value = "";
+
+document.getElementById("resourceUpload").value = "";
+
+  });
 
     /* IMAGE */
 
@@ -456,59 +546,92 @@ const FeedModule = {
     /* LIKE SYSTEM */
 
     document
-      .querySelectorAll(".like-btn")
-      .forEach(btn => {
+.querySelectorAll(".like-btn")
+.forEach(btn=>{
 
-        btn.addEventListener("click", () => {
+btn.addEventListener("click",async()=>{
 
-          const id =
-            Number(btn.dataset.id);
+const formData=new FormData();
 
-          const post =
-            this.posts.find(
-              p => p.id === id
-            );
+formData.append(
+"post_id",
+btn.dataset.id
+);
 
-          if (!post) return;
+const response=await fetch(
 
-          if (post.likedByUser) {
+"php/api/like_post.php",
 
-            post.likes--;
-            post.likedByUser = false;
+{
 
-          } else {
+method:"POST",
 
-            post.likes++;
-            post.likedByUser = true;
-          }
+body:formData,
 
-          this.render(
-            document.getElementById("contentArea")
-          );
+credentials:"include"
 
-        });
+}
 
-      });
+);
+
+const result=
+await response.json();
+
+if(result.success){
+
+await this.loadPosts();
+
+}
+
+});
+
+});
 
   document
 .querySelectorAll(".delete-post-btn")
 .forEach(btn => {
 
-btn.addEventListener("click", () => {
+btn.addEventListener("click", async () => {
 
-const id =
-Number(btn.dataset.id);
+const id = Number(btn.dataset.id);
 
-this.posts =
-this.posts.filter(
-post => post.id !== id
+if(!confirm("Delete this post?")){
+
+return;
+
+}
+
+const formData = new FormData();
+
+formData.append("id", id);
+
+const response = await fetch(
+
+"php/api/delete_post.php",
+
+{
+
+method:"POST",
+
+body:formData,
+
+credentials:"include"
+
+}
+
 );
 
-this.render(
-document.getElementById(
-"contentArea"
-)
-);
+const result = await response.json();
+
+if(!result.success){
+
+alert(result.message);
+
+return;
+
+}
+
+await this.loadPosts();
 
 });
 
@@ -560,49 +683,58 @@ input.focus();
 
 document
 .querySelectorAll(".add-comment-btn")
-.forEach(btn => {
+.forEach(btn=>{
 
-  btn.addEventListener("click", () => {
+btn.addEventListener("click",async()=>{
 
-    const id =
-      Number(btn.dataset.id);
+const parent=
+btn.closest(".comments-section");
 
-    const parent =
-      btn.closest(".comments-section");
+const input=
+parent.querySelector(".comment-input");
 
-    const input =
-      parent.querySelector(
-        ".comment-input"
-      );
+const text=input.value.trim();
 
-    const text =
-      input.value.trim();
+if(!text)return;
 
-    if (!text) return;
+const formData=new FormData();
 
-    const post =
-      this.posts.find(
-        p => p.id === id
-      );
+formData.append(
+"post_id",
+btn.dataset.id
+);
 
-    if (!post) return;
+formData.append(
+"comment",
+text
+);
 
-    post.comments.push({
+const response=await fetch(
 
-      user:
-        window.currentUser.name,
+"php/api/add_comment.php",
 
-      text
+{
 
-    });
+method:"POST",
 
-    this.render(
-      document.getElementById(
-        "contentArea"
-      )
-    );
+body:formData,
 
-  });
+credentials:"include"
+
+}
+
+);
+
+const result=
+await response.json();
+
+if(result.success){
+
+await this.loadPosts();
+
+}
+
+});
 
 });
 },
@@ -627,10 +759,13 @@ document
 
     this.selectedMedia = {
 
-      url: imageURL,
+  url: imageURL,
 
-      type: "image"
-    };
+  type: "image",
+
+  file
+
+};
 
     preview.innerHTML = `
 
@@ -654,10 +789,13 @@ document
 
     this.selectedMedia = {
 
-      url: videoURL,
+  url: videoURL,
 
-      type: "video"
-    };
+  type: "video",
+
+  file
+
+};
 
     preview.innerHTML = `
 
@@ -685,12 +823,15 @@ document
 
   this.selectedMedia = {
 
-    url: resourceURL,
+  url: resourceURL,
 
-    type: "resource",
+  type: "resource",
 
-    fileName: file.name
-  };
+  fileName: file.name,
+
+  file
+
+};
 
   preview.innerHTML = `
 
