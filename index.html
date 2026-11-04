@@ -52,114 +52,143 @@
 
   </aside>
 
-  <!-- MAIN -->
-  <main class="main-content">
+  <div id="appShell">
+    <!-- MAIN -->
+    <main class="main-content">
 
-    <!-- TOPBAR -->
-    <header class="topbar">
-      <div>
-        <h1 id="pageTitle">Dashboard</h1>
-      </div>
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <div>
+          <h1 id="pageTitle">Dashboard</h1>
+        </div>
 
-      <div class="topbar-actions">
+        <div class="topbar-actions">
 
-        <button id="themeToggle">
-          🌙
-        </button>
+          <button id="themeToggle">
+            🌙
+          </button>
 
-        <button id="loginBtn" class="primary-btn">
-          Sign In
-        </button>
+          <button id="loginBtn" class="primary-btn">
+            Sign In
+          </button>
 
-      </div>
+        </div>
 
-      <div class="notification-wrapper">
+        <div class="notification-wrapper">
 
-  <button
-    id="notificationBtn"
-    class="notification-btn"
-    title="Notifications"
-    aria-label="Notifications"
-  >
-
-    🔔
-
-    <span
-      id="notificationBadge"
-      class="notification-badge hidden"
+    <button
+      id="notificationBtn"
+      class="notification-btn"
+      title="Notifications"
+      aria-label="Notifications"
     >
-      0
-    </span>
 
-  </button>
+      🔔
 
-
-  <div
-    id="notificationPanel"
-    class="notification-panel hidden"
-  >
-
-    <div class="notification-panel-header">
-
-      <div>
-
-        <h3>
-          Notifications
-        </h3>
-
-        <span>
-          Stay up to date with Family Hub
-        </span>
-
-      </div>
-
-      <button
-        id="markAllNotificationsBtn"
-        class="mark-all-btn"
+      <span
+        id="notificationBadge"
+        class="notification-badge hidden"
       >
-        Mark all read
-      </button>
+        0
+      </span>
 
-    </div>
+    </button>
 
 
     <div
-      id="notificationList"
-      class="notification-list"
-    ></div>
+      id="notificationPanel"
+      class="notification-panel hidden"
+    >
+
+      <div class="notification-panel-header">
+
+        <div>
+
+          <h3>
+            Notifications
+          </h3>
+
+          <span>
+            Stay up to date with Family Hub
+          </span>
+
+        </div>
+
+        <button
+          id="markAllNotificationsBtn"
+          class="mark-all-btn"
+        >
+          Mark all read
+        </button>
+
+      </div>
+
+
+      <div
+        id="notificationList"
+        class="notification-list"
+      ></div>
+
+    </div>
 
   </div>
+      </header>
 
-</div>
-    </header>
+      <!-- PAGE CONTENT -->
+      <section id="contentArea"></section>
 
-    <!-- PAGE CONTENT -->
-    <section id="contentArea"></section>
-
-  </main>
+    </main>
+  </div>
 
   <!-- LOGIN MODAL -->
   <div id="loginModal" class="modal hidden">
 
     <div class="modal-box">
 
-      <h2>Welcome Back</h2>
+      <h2 id="authTitle">Welcome back</h2>
 
-      <p class="modal-text">
+      <p class="modal-text" id="authSubtitle">
         Sign in to continue to Family Hub
       </p>
 
-      <input id="username" placeholder="Username">
+      <div id="loginFormView">
+        <input id="username" placeholder="Username or email">
 
-      <input
-        id="password"
-        type="password"
-        placeholder="Password"
-      >
+        <input
+          id="password"
+          type="password"
+          placeholder="Password"
+        >
 
-      <button id="submitLogin" class="primary-btn">
-        Sign In
-      </button>
+        <button id="submitLogin" class="primary-btn">
+          Sign In
+        </button>
+
+        <p class="modal-text" style="margin-top: 16px; text-align: center;">
+          Need an account?
+          <button type="button" id="showSignupBtn" class="primary-btn" style="padding: 8px 12px; margin-left: 8px;">
+            Create one
+          </button>
+        </p>
+      </div>
+
+      <div id="signupFormView" class="hidden">
+        <input id="registerFullName" placeholder="Full name">
+        <input id="registerEmail" type="email" placeholder="Email address">
+        <input id="registerUsername" placeholder="Username">
+        <input id="registerPassword" type="password" placeholder="Password (min 6)">
+
+        <button id="submitRegister" class="primary-btn">
+          Create Account
+        </button>
+
+        <p class="modal-text" style="margin-top: 16px; text-align: center;">
+          Already have an account?
+          <button type="button" id="showLoginBtn" class="primary-btn" style="padding: 8px 12px; margin-left: 8px;">
+            Sign in
+          </button>
+        </p>
+      </div>
 
     </div>
 

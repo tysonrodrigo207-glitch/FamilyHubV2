@@ -46,7 +46,7 @@ loadDotEnv(dirname(__DIR__, 2) . "/.env");
 
 $host = env("DB_HOST", "127.0.0.1");
 $dbname = env("DB_NAME", "familyhub");
-$user = env("DB_USER", "familyhub");
+$user = env("DB_USER", "root");
 $password = env("DB_PASS", "");
 $port = (int) env("DB_PORT", 3306);
 

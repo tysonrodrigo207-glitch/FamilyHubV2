@@ -35,7 +35,9 @@ CREATE TABLE users (
 
     bio TEXT,
 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    last_seen TIMESTAMP NULL
 
 );
 
@@ -428,7 +430,7 @@ VALUES(
 
     'admin@familyhub.com',
 
-    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og8Qv6fh6fT5Vf6e',
+    '$2y$12$njTxPcAeYhpA8q9McQOGJOU3GJpcQd4aXtjTpb1oTgMep3yq3SrTi',
 
     'Admin'
 

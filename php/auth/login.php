@@ -9,8 +9,8 @@ require_once "../config/database.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-$username = trim($data["username"] ?? "");
-$password = trim($data["password"] ?? "");
+$username = trim((string) ($data["username"] ?? $data["email"] ?? ""));
+$password = trim((string) ($data["password"] ?? ""));
 
 if ($username === "" || $password === "") {
 
@@ -22,11 +22,11 @@ if ($username === "" || $password === "") {
     exit();
 }
 
-$sql = "SELECT * FROM users WHERE username=?";
+$sql = "SELECT * FROM users WHERE username = ? OR email = ? LIMIT 1";
 
 $stmt = $conn->prepare($sql);
 
-$stmt->bind_param("s", $username);
+$stmt->bind_param("ss", $username, $username);
 
 $stmt->execute();
 

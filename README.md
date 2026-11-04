@@ -21,6 +21,16 @@ php -S 127.0.0.1:8000
 
 Then visit `http://127.0.0.1:8000`.
 
+### Default family-head admin
+
+The database seed creates a default admin account for the family head:
+
+- Username: `admin`
+- Email: `admin@familyhub.com`
+- Password: `admin123`
+
+Regular sign-up users are created as `Member` by default. Only an existing `Admin` can assign higher privileges.
+
 ## Production deployment checklist
 
 - Set real values for `DB_HOST`, `DB_NAME`, `DB_USER`, and `DB_PASS` in your server environment.
