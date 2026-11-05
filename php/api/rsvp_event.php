@@ -19,13 +19,19 @@ $user = $_SESSION["user"]["id"];
 
 $event = (int)$_POST["event_id"];
 
-$status = $_POST["status"];
+$statusMap = [
+    "going" => "Going",
+    "maybe" => "Interested",
+    "not_going" => "Not Going"
+];
+
+$status = $statusMap[$_POST["status"]] ?? "Interested";
 
 $stmt = $conn->prepare("
 
 SELECT id
 
-FROM event_attendees
+FROM event_rsvp
 
 WHERE event_id=?
 
@@ -43,7 +49,7 @@ if($result->num_rows){
 
 $stmt = $conn->prepare("
 
-UPDATE event_attendees
+UPDATE event_rsvp
 
 SET status=?
 
@@ -69,7 +75,7 @@ $user
 
 $stmt = $conn->prepare("
 
-INSERT INTO event_attendees
+INSERT INTO event_rsvp
 
 (event_id,user_id,status)
 

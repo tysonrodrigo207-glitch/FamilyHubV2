@@ -48,9 +48,15 @@
         📊 Surveys
       </button>
 
+      <button class="nav-btn" data-page="profile">
+        👤 Profile
+      </button>
+
     </nav>
 
   </aside>
+
+  <div id="sidebarBackdrop" class="sidebar-backdrop hidden"></div>
 
   <div id="appShell">
     <!-- MAIN -->
@@ -58,7 +64,10 @@
 
       <!-- TOPBAR -->
       <header class="topbar">
-        <div>
+        <div class="topbar-left">
+          <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle sidebar">
+            ☰
+          </button>
           <h1 id="pageTitle">Dashboard</h1>
         </div>
 

@@ -645,7 +645,7 @@ document.getElementById("contentArea")
 });
 
 document
-.querySelectorAll(".calendar-day")
+.querySelectorAll(".calendar-cell")
 .forEach(day => {
 
 day.addEventListener("click", () => {
@@ -654,6 +654,8 @@ const event =
 this.events.find(
 e => e.id == day.dataset.id
 );
+
+if (!event) return;
 
 document.getElementById("eventModalContent").innerHTML = `
 
@@ -779,26 +781,32 @@ document
 
   async rsvp(eventId,status){
 
+const statusMap = {
+  going: "going",
+  maybe: "maybe",
+  not_going: "not_going"
+};
+
 const form = new FormData();
 
 form.append("event_id",eventId);
 
-form.append("status",status);
+form.append("status", statusMap[status] || "maybe");
 
 const response = await fetch(
-
+ 
 "php/api/rsvp_event.php",
-
+ 
 {
-
+ 
 method:"POST",
-
+ 
 body:form,
-
+ 
 credentials:"include"
-
+ 
 }
-
+ 
 );
 
 const result = await response.json();
@@ -877,17 +885,15 @@ return "<small>No attendees yet</small>";
 
 const people = list.split("|");
 
-return people.slice(0,4).map(name=>`
-
-<div class="attendee-avatar"
-
-title="${name}">
-
-${name.charAt(0)}
-
-</div>
-
-`).join("");
+return people
+  .filter(Boolean)
+  .slice(0,4)
+  .map(name => `
+    <div class="attendee-avatar" title="${name}">
+      ${String(name).charAt(0).toUpperCase()}
+    </div>
+  `)
+  .join("") || "<small>No attendees yet</small>";
 
 }
 

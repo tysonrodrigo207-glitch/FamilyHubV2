@@ -53,7 +53,11 @@ CREATE TABLE posts (
 
     content TEXT NOT NULL,
 
-    media VARCHAR(255),
+    media VARCHAR(512),
+
+    media_type VARCHAR(30) DEFAULT NULL,
+
+    file_name VARCHAR(255) DEFAULT NULL,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 

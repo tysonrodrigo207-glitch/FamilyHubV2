@@ -6,25 +6,35 @@ const DashboardModule = {
   |--------------------------------------------------------------------------
   */
 
-  getData() {
+  async getData() {
 
     const currentUser =
       window.currentUser || {};
 
+    const sessionStats = await this.fetchLiveStats();
+
     const posts =
-      window.FeedModule?.posts || [];
+      (window.FeedModule?.posts && window.FeedModule.posts.length)
+        ? window.FeedModule.posts
+        : (sessionStats.posts || []);
 
     const events =
-      window.EventsModule?.events || [];
+      (window.EventsModule?.events && window.EventsModule.events.length)
+        ? window.EventsModule.events
+        : (sessionStats.events || []);
 
     const services =
-      window.DirectoryModule?.services || [];
+      (window.DirectoryModule?.services && window.DirectoryModule.services.length)
+        ? window.DirectoryModule.services
+        : (sessionStats.services || []);
 
     const chats =
-      window.MessagesModule?.chats || [];
+      (window.MessagesModule?.conversations && window.MessagesModule.conversations.length)
+        ? window.MessagesModule.conversations
+        : (sessionStats.chats || []);
 
     const surveys =
-      window.SurveysModule?.surveys || [];
+      window.SurveysModule?.surveys || sessionStats.surveys || [];
 
     return {
 
@@ -63,6 +73,34 @@ const DashboardModule = {
 
   },
 
+  async fetchLiveStats() {
+    try {
+      const [postsRes, eventsRes, servicesRes, conversationsRes] = await Promise.all([
+        fetch("php/api/feed.php", { credentials: "include" }).then(res => res.json()).catch(() => ({ success: false, data: [] })),
+        fetch("php/api/events.php", { credentials: "include" }).then(res => res.json()).catch(() => ({ success: false, data: [] })),
+        fetch("php/api/services.php", { credentials: "include" }).then(res => res.json()).catch(() => ({ success: false, data: [] })),
+        fetch("php/api/conversations.php", { credentials: "include" }).then(res => res.json()).catch(() => ({ success: false, data: [] }))
+      ]);
+
+      return {
+        posts: Array.isArray(postsRes?.data) ? postsRes.data : [],
+        events: Array.isArray(eventsRes?.data) ? eventsRes.data : [],
+        services: Array.isArray(servicesRes?.data) ? servicesRes.data : [],
+        chats: Array.isArray(conversationsRes?.data) ? conversationsRes.data : [],
+        surveys: Array.isArray(window.SurveysModule?.surveys) ? window.SurveysModule.surveys : []
+      };
+    } catch (error) {
+      console.error("Failed to load dashboard stats:", error);
+      return {
+        posts: [],
+        events: [],
+        services: [],
+        chats: [],
+        surveys: []
+      };
+    }
+  },
+
 
   /*
   |--------------------------------------------------------------------------
@@ -73,7 +111,7 @@ const DashboardModule = {
   async render(container) {
 
     const data =
-      this.getData();
+      await this.getData();
 
 
     const userName =

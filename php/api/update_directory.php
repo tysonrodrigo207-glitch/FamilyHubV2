@@ -3,66 +3,89 @@
 require_once __DIR__ . "/../config/session.php";
 
 header("Content-Type: application/json");
+require_once __DIR__ . "/../config/database.php";
 
-require_once "../config/database.php";
-
-if(!isset($_SESSION["user"])){
-    exit(json_encode([
-        "success"=>false
-    ]));
+if (!isset($_SESSION["user"])) {
+    http_response_code(401);
+    echo json_encode([
+        "success" => false,
+        "message" => "Not authenticated."
+    ]);
+    exit;
 }
 
-$user=$_SESSION["user"]["id"];
+$userId = (int) $_SESSION["user"]["id"];
+$fullName = trim((string) ($_POST["full_name"] ?? $_POST["name"] ?? ""));
+$bio = trim((string) ($_POST["bio"] ?? ""));
 
-$phone=$_POST["phone"];
-$course=$_POST["course"];
-$year=$_POST["year_of_study"];
-$faculty=$_POST["faculty"];
-$skills=$_POST["skills"];
-$interests=$_POST["interests"];
-$linkedin=$_POST["linkedin"];
-$github=$_POST["github"];
-$website=$_POST["website"];
+if ($fullName === "") {
+    http_response_code(400);
+    echo json_encode([
+        "success" => false,
+        "message" => "Please provide your full name."
+    ]);
+    exit;
+}
 
-$stmt=$conn->prepare("
+$profilePicture = $_SESSION["user"]["profile_picture"] ?? "";
 
-UPDATE directory_profiles
+if (isset($_FILES["profile_image"]) && $_FILES["profile_image"]["error"] !== UPLOAD_ERR_NO_FILE) {
+    $file = $_FILES["profile_image"];
 
-SET
+    if ($file["error"] !== UPLOAD_ERR_OK) {
+        echo json_encode(["success" => false, "message" => "Upload failed."]);
+        exit;
+    }
 
-phone=?,
-course=?,
-year_of_study=?,
-faculty=?,
-skills=?,
-interests=?,
-linkedin=?,
-github=?,
-website=?
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime = finfo_file($finfo, $file["tmp_name"]);
+    finfo_close($finfo);
 
-WHERE user_id=?
+    $allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!in_array($mime, $allowed, true)) {
+        echo json_encode(["success" => false, "message" => "Only image files are allowed."]);
+        exit;
+    }
 
-");
+    $uploadDir = dirname(__DIR__, 2) . "/uploads/profile";
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0775, true);
+    }
 
-$stmt->bind_param(
+    $ext = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION) ?: "png");
+    $filename = "profile_" . $userId . "_" . time() . "." . $ext;
+    if (!move_uploaded_file($file["tmp_name"], $uploadDir . "/" . $filename)) {
+        echo json_encode(["success" => false, "message" => "Could not save image."]);
+        exit;
+    }
 
-"sssssssssi",
+    $profilePicture = "uploads/profile/" . $filename;
+}
 
-$phone,
-$course,
-$year,
-$faculty,
-$skills,
-$interests,
-$linkedin,
-$github,
-$website,
-$user
+$sql = "UPDATE users SET full_name = ?, bio = ?";
+$params = [$fullName, $bio];
+$types = "ss";
+if ($profilePicture !== "") {
+    $sql .= ", profile_picture = ?";
+    $params[] = $profilePicture;
+    $types .= "s";
+}
+$sql .= " WHERE id = ?";
+$params[] = $userId;
+$types .= "i";
 
-);
-
+$stmt = $conn->prepare($sql);
+$stmt->bind_param($types, ...$params);
 $stmt->execute();
 
+$_SESSION["user"]["name"] = $fullName;
+$_SESSION["user"]["full_name"] = $fullName;
+$_SESSION["user"]["bio"] = $bio;
+if ($profilePicture !== "") {
+    $_SESSION["user"]["profile_picture"] = $profilePicture;
+}
+
 echo json_encode([
-"success"=>true
+    "success" => true,
+    "user" => $_SESSION["user"]
 ]);

@@ -63,14 +63,13 @@ if (!password_verify($password, $user["password"])) {
 $_SESSION["user"] = [
 
     "id" => $user["id"],
-
     "name" => $user["full_name"],
-
+    "full_name" => $user["full_name"],
     "username" => $user["username"],
-
     "email" => $user["email"],
-
-    "role" => $user["role"]
+    "role" => $user["role"],
+    "bio" => $user["bio"] ?? "",
+    "profile_picture" => $user["profile_picture"] ?? ""
 
 ];
 

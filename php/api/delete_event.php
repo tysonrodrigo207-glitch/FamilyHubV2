@@ -13,7 +13,7 @@ if(!isset($_SESSION["user"])){
 $id = (int)$_POST["id"];
 
 $conn->query("
-DELETE FROM event_attendees
+DELETE FROM event_rsvp
 WHERE event_id=$id
 ");
 

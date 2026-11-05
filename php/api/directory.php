@@ -12,34 +12,16 @@ if(!isset($_SESSION["user"])){
     ]));
 }
 
-$sql="
-
+$sql = "
 SELECT
-
-u.id,
-u.full_name,
-u.role,
-u.profile_picture,
-u.bio,
-
-d.phone,
-d.course,
-d.year_of_study,
-d.faculty,
-d.skills,
-d.interests,
-d.linkedin,
-d.github,
-d.website
-
+    u.id,
+    u.full_name,
+    u.role,
+    u.profile_picture,
+    u.bio,
+    u.email
 FROM users u
-
-LEFT JOIN directory_profiles d
-
-ON u.id=d.user_id
-
 ORDER BY u.full_name ASC
-
 ";
 
 $result=$conn->query($sql);

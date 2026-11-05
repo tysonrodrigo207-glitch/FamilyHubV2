@@ -83,9 +83,12 @@ $userId = $conn->insert_id;
 $_SESSION["user"] = [
     "id" => $userId,
     "name" => $fullName,
+    "full_name" => $fullName,
     "username" => $username,
     "email" => $email,
-    "role" => $role
+    "role" => $role,
+    "bio" => "",
+    "profile_picture" => ""
 ];
 
 echo json_encode([

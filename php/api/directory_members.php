@@ -23,27 +23,15 @@ if (!isset($_SESSION["user"])) {
 $sql = "
 
 SELECT
-
     users.id,
     users.full_name,
     users.username,
     users.email,
     users.role,
     users.profile_picture,
-    users.bio,
-
-    directory_profiles.course,
-    directory_profiles.year_of_study,
-    directory_profiles.skills
-
+    users.bio
 FROM users
-
-LEFT JOIN directory_profiles
-
-    ON directory_profiles.user_id = users.id
-
 ORDER BY users.full_name ASC
-
 ";
 
 
