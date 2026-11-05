@@ -173,10 +173,37 @@
           Sign In
         </button>
 
+        <p class="modal-text" style="margin-top: 12px; text-align: center;">
+          <button type="button" id="showForgotPasswordBtn" class="secondary-btn" style="padding: 8px 12px; margin-bottom: 8px;">
+            Forgot password?
+          </button>
+        </p>
+
         <p class="modal-text" style="margin-top: 16px; text-align: center;">
           Need an account?
           <button type="button" id="showSignupBtn" class="primary-btn" style="padding: 8px 12px; margin-left: 8px;">
             Create one
+          </button>
+        </p>
+      </div>
+
+      <div id="forgotPasswordView" class="hidden">
+        <input id="resetEmail" type="email" placeholder="Email address">
+        <button id="submitPasswordResetRequest" class="primary-btn">
+          Send reset code
+        </button>
+
+        <div id="resetTokenBox" class="hidden" style="margin-top: 12px;">
+          <input id="resetTokenInput" placeholder="Paste reset code from email">
+          <input id="newPasswordInput" type="password" placeholder="New password (min 6)">
+          <button id="submitPasswordReset" class="primary-btn">
+            Update password
+          </button>
+        </div>
+
+        <p class="modal-text" style="margin-top: 16px; text-align: center;">
+          <button type="button" id="backToLoginFromReset" class="secondary-btn" style="padding: 8px 12px;">
+            Back to sign in
           </button>
         </p>
       </div>

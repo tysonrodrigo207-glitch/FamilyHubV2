@@ -217,6 +217,8 @@ CREATE TABLE conversation_members (
 
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
+    last_read_message INT DEFAULT 0,
+
     FOREIGN KEY(conversation_id)
     REFERENCES conversations(id)
     ON DELETE CASCADE,
@@ -242,6 +244,14 @@ CREATE TABLE messages (
     sender_id INT NOT NULL,
 
     message TEXT NOT NULL,
+
+    message_type VARCHAR(20) DEFAULT 'text',
+
+    media_url VARCHAR(255) DEFAULT NULL,
+
+    delivered TINYINT(1) DEFAULT 0,
+
+    seen TINYINT(1) DEFAULT 0,
 
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
@@ -388,6 +398,30 @@ CREATE TABLE survey_votes (
 );
 
 -- ===========================
+-- PASSWORD RESET TOKENS
+-- ===========================
+
+CREATE TABLE password_resets (
+
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    user_id INT NOT NULL,
+
+    token VARCHAR(255) NOT NULL UNIQUE,
+
+    expires_at DATETIME NOT NULL,
+
+    used_at DATETIME NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY(user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE
+
+);
+
+-- ===========================
 -- NOTIFICATIONS
 -- ===========================
 
@@ -438,5 +472,22 @@ VALUES(
 
     'Admin'
 
+);
 
+INSERT INTO notifications (
 
+    user_id,
+    title,
+    message,
+    is_read
+
+)
+
+VALUES (
+
+    1,
+    'Welcome to Family Hub',
+    'You are signed in as the family admin. Everything is ready for your household dashboard.',
+    FALSE
+
+);

@@ -1,9 +1,10 @@
 <?php
 
 require_once __DIR__ . "/../config/session.php";
+
 header("Content-Type: application/json");
 require_once "../config/database.php";
-
+require_once __DIR__ . "/../config/notifications.php";
 $conn->set_charset("utf8mb4");
 mysqli_set_charset($conn, "utf8mb4");
 
@@ -136,5 +137,11 @@ if (!$stmt->execute()) {
    ]);
    exit();
 }
+
+$notificationMessage = !empty($content)
+   ? "A new family update has been shared."
+   : "A new photo or resource was shared in the family feed.";
+
+broadcastNotification($conn, "New community update", $notificationMessage, $userId);
 
 echo json_encode(["success" => true]);

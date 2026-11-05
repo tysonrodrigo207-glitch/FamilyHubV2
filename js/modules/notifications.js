@@ -6,19 +6,41 @@ const NotificationModule = {
   |--------------------------------------------------------------------------
   */
 
-  notifications: [
+  notifications: [],
 
-    {
-      id: 1,
-      type: "system",
-      icon: "🎉",
-      text: "Welcome to Family Hub!",
-      time: "Just now",
-      read: false,
-      createdAt: Date.now()
+  async loadFromServer() {
+    try {
+      const response = await fetch("php/api/notifications.php", {
+        credentials: "include",
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        this.notifications = [];
+        this.updateBadge();
+        this.renderPanel();
+        return;
+      }
+
+      this.notifications = (result.notifications || []).map((notification) => ({
+        id: Number(notification.id),
+        type: notification.type || "system",
+        icon: notification.icon || "🔔",
+        text: notification.text || notification.message || "New update",
+        time: notification.time || "Just now",
+        read: Boolean(notification.read),
+        createdAt: Date.now(),
+      }));
+
+      this.updateBadge();
+      this.renderPanel();
+    } catch (error) {
+      this.notifications = [];
+      this.updateBadge();
+      this.renderPanel();
     }
-
-  ],
+  },
 
 
   /*
@@ -108,7 +130,7 @@ const NotificationModule = {
   |--------------------------------------------------------------------------
   */
 
-  markAsRead(id) {
+  async markAsRead(id) {
 
     const notification =
       this.notifications.find(
@@ -123,12 +145,23 @@ const NotificationModule = {
 
     }
 
+    const formData = new FormData();
+    formData.append("action", "read");
+    formData.append("id", id);
+
+    try {
+      await fetch("php/api/notifications.php", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+    } catch (error) {
+      console.warn("Unable to sync notification state.", error);
+    }
 
     notification.read = true;
 
-
     this.updateBadge();
-
     this.renderPanel();
 
   },
@@ -140,7 +173,20 @@ const NotificationModule = {
   |--------------------------------------------------------------------------
   */
 
-  markAllAsRead() {
+  async markAllAsRead() {
+
+    const formData = new FormData();
+    formData.append("action", "mark_all_read");
+
+    try {
+      await fetch("php/api/notifications.php", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+    } catch (error) {
+      console.warn("Unable to sync all notifications as read.", error);
+    }
 
     this.notifications.forEach(
       notification => {
@@ -164,7 +210,21 @@ const NotificationModule = {
   |--------------------------------------------------------------------------
   */
 
-  remove(id) {
+  async remove(id) {
+
+    const formData = new FormData();
+    formData.append("action", "delete");
+    formData.append("id", id);
+
+    try {
+      await fetch("php/api/notifications.php", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+    } catch (error) {
+      console.warn("Unable to remove notification.", error);
+    }
 
     this.notifications =
       this.notifications.filter(
@@ -189,10 +249,9 @@ const NotificationModule = {
 
   init() {
 
+    this.loadFromServer();
     this.updateBadge();
-
     this.renderPanel();
-
     this.attachEvents();
 
   },

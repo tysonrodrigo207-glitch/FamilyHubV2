@@ -5,8 +5,7 @@ require_once __DIR__ . "/../config/session.php";
 
 header("Content-Type: application/json");
 
-require_once "../config/database.php";
-
+require_once __DIR__ . "/../config/notifications.php";
 if(!isset($_SESSION["user"])){
 
 exit(json_encode([
@@ -98,6 +97,19 @@ $status
 }
 
 $stmt->execute();
+
+$ownerQuery = $conn->prepare("SELECT created_by, title FROM events WHERE id = ?");
+$ownerQuery->bind_param("i", $event);
+$ownerQuery->execute();
+$ownerResult = $ownerQuery->get_result();
+
+if ($ownerResult && $ownerResult->num_rows) {
+   $eventData = $ownerResult->fetch_assoc();
+   $ownerId = (int) ($eventData["created_by"] ?? 0);
+   if ($ownerId > 0 && $ownerId !== $user) {
+       notifyUser($conn, $ownerId, "Event RSVP", "A family member just responded to your event.");
+   }
+}
 
 echo json_encode([
 

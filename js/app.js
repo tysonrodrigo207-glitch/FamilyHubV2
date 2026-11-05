@@ -167,8 +167,12 @@ document.addEventListener(
     const loginBtn = document.getElementById("loginBtn");
     const showSignupBtn = document.getElementById("showSignupBtn");
     const showLoginBtn = document.getElementById("showLoginBtn");
+    const showForgotPasswordBtn = document.getElementById("showForgotPasswordBtn");
+    const backToLoginFromReset = document.getElementById("backToLoginFromReset");
     const submitLoginBtn = document.getElementById("submitLogin");
     const submitRegisterBtn = document.getElementById("submitRegister");
+    const submitPasswordResetRequestBtn = document.getElementById("submitPasswordResetRequest");
+    const submitPasswordResetBtn = document.getElementById("submitPasswordReset");
     const sidebarToggle = document.getElementById("sidebarToggle");
     const sidebarBackdrop = document.getElementById("sidebarBackdrop");
     const sidebar = document.querySelector(".sidebar");
@@ -193,6 +197,10 @@ document.addEventListener(
       renderPage("dashboard");
     } else {
       showAuthScreen("login");
+    }
+
+    if (typeof NotificationModule !== "undefined") {
+      NotificationModule.init();
     }
 
     if (window.innerWidth <= 900) {
@@ -238,6 +246,51 @@ document.addEventListener(
 
     showLoginBtn.addEventListener("click", () => {
       showAuthScreen("login");
+    });
+
+    showForgotPasswordBtn?.addEventListener("click", () => {
+      showAuthScreen("forgot-password");
+    });
+
+    backToLoginFromReset?.addEventListener("click", () => {
+      showAuthScreen("login");
+    });
+
+    submitPasswordResetRequestBtn?.addEventListener("click", async () => {
+      const email = document.getElementById("resetEmail").value.trim();
+      if (!email) {
+        alert("Enter the email address tied to your account.");
+        return;
+      }
+
+      const result = await requestPasswordReset(email);
+      if (!result) {
+        return;
+      }
+
+      const tokenBox = document.getElementById("resetTokenBox");
+      if (tokenBox) {
+        tokenBox.classList.remove("hidden");
+      }
+
+      const tokenField = document.getElementById("resetTokenInput");
+      if (tokenField && result.token) {
+        tokenField.value = result.token;
+      }
+
+      alert(result.message || "Reset instructions are ready. Paste the reset code and choose a new password.");
+    });
+
+    submitPasswordResetBtn?.addEventListener("click", async () => {
+      const token = document.getElementById("resetTokenInput").value.trim();
+      const password = document.getElementById("newPasswordInput").value.trim();
+
+      if (!token || !password) {
+        alert("Enter the reset code and your new password.");
+        return;
+      }
+
+      await resetPassword(token, password);
     });
 
     submitLoginBtn.addEventListener("click", async () => {

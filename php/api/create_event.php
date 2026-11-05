@@ -2,10 +2,11 @@
 
 require_once __DIR__ . "/../config/session.php";
 
+
 header("Content-Type: application/json");
 
 require_once "../config/database.php";
-
+require_once __DIR__ . "/../config/notifications.php";
 if(!isset($_SESSION["user"])){
 
 exit(json_encode([
@@ -65,6 +66,8 @@ $content
 );
 
 $post->execute();
+
+broadcastNotification($conn, "New event", "A new family event has been scheduled.", $user);
 
 echo json_encode([
 "success"=>true

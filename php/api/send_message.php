@@ -3,8 +3,7 @@
 require_once __DIR__ . "/../config/session.php";
 
 header("Content-Type: application/json");
-require_once "../config/database.php";
-
+require_once __DIR__ . "/../config/notifications.php";
 if(!isset($_SESSION["user"])){
     echo json_encode([
         "success"=>false
@@ -91,6 +90,15 @@ $media
 );
 
 $insert->execute();
+
+$stmt = $conn->prepare("SELECT user_id FROM conversation_members WHERE conversation_id = ? AND user_id != ?");
+$stmt->bind_param("ii", $conversationId, $user);
+$stmt->execute();
+$members = $stmt->get_result();
+
+while ($member = $members->fetch_assoc()) {
+    notifyUser($conn, (int) $member["user_id"], "New message", "You have a new message in the family chat.");
+}
 
 $update = $conn->prepare("
 UPDATE users
