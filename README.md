@@ -40,6 +40,38 @@ Regular sign-up users are created as `Member` by default. Only an existing `Admi
 - Use HTTPS in production so session cookies are secure.
 - Make sure your hosting environment supports PHP and MySQL.
 
+## Render deployment
+
+Render is a good fit for this PHP app because it can host the web service and a MySQL database.
+
+1. Push this repo to GitHub.
+2. In Render, click `New` → `Web Service`.
+3. Connect your GitHub repository.
+4. Use the project root as the service root.
+5. Set the start command to:
+
+```bash
+php -S 0.0.0.0:$PORT -t .
+```
+
+6. Create a Render MySQL database and copy the connection values into the service environment variables.
+7. Add these variables in Render:
+
+```bash
+APP_ENV=production
+DB_HOST=your-render-db-host
+DB_PORT=3306
+DB_NAME=familyhub
+DB_USER=your-db-user
+DB_PASS=your-db-password
+```
+
+8. Run the SQL from `database/familyhub.sql` against the Render database once.
+9. Deploy the service.
+10. Render will generate a live URL such as `https://familyhub.onrender.com`.
+
+The app can then be shared with family members or testers using that link.
+
 ## Project structure
 
 - `index.html` – main front-end entry point
